@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Getting started - Big Puzzle SDK</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <a class="brand" href="getting-started.html">Big Puzzle SDK</a>
+    <nav class="tabs"><a href="getting-started.html" class="on">Getting started</a><a href="components.html">Components</a><a href="scripting.html">Scripting</a></nav>
+    <a class="gh" href="https://github.com/markviews/BigPuzzleSDK">GitHub</a>
+  </div>
+</header>
+<div class="page has-side">
+<nav class="side" aria-label="On this page"><ul><li class="grp"><a href="#setup">Setup Unity project</a></li><li class="grp"><a href="#creating-first-puzzle">Creating first puzzle</a></li><li class="grp"><a href="#testing">Testing</a></li><li class="grp"><a href="#sharing">Sharing</a></li></ul></nav>
+<main>
+<h1 id="getting-started">Getting started</h1>
+<p>Things to know:</p>
+<ul>
+<li>Everyone in the lobby needs the mod and the same puzzles installed</li>
+<li>Modded gourds can only go in the modded tower. Modded tower does not accept vanilla gourds.</li>
+<li>Players will see the placeholder tower (gourd holders at red tower) unless they have a modded tower installed. Players can only have one modded tower installed. Currently nothing happens when modded tower is full. (Select puzzleType: Tower in Puzzle SDK to make one) Please someone make a cool one :)</li>
+</ul>
+
+<h3>Think about while creating:</h3>
+<ul>
+<li>Please make sure there is no where player can get stuck in your puzzle. Doors that can't be unlocked from the inside, a pit with no exit.. Anything that soft locks the game is no fun</li>
+<li>Try not to overlap with other modded puzzles (world position). It would be nice if they were all compatible with each other</li>
+<li>Make sure everything resets OnPuzzleStop. Some components don't automatically reset themselves when the puzzle stops.</li>
+<li>Support 2, 3 and 4 player lobbies. Use the <code>PuzzleHider</code> script to hide objects per lobby size. Otherwise please say what lobby sizes your puzzle is compatible with in your description.</li>
+</ul>
+
+<h3 id="setup">Setup Unity project</h3>
+<ol>
+<li>Install <a href="https://thunderstore.io/c/big-walk/p/ebkr/r2modman/">r2modman</a> (click the download button and download / extract the zip)</li>
+<li>Create profile in r2modman and install <a href="https://github.com/markviews/BigPuzzleSDK/releases">BigPuzzleSDK</a>, <a href="https://thunderstore.io/c/big-walk/p/Yukikaco/CinematicUnityExplorer/">UnityExplorer</a>, <a href="https://thunderstore.io/c/big-walk/p/jangles/NoClip/">NoClip</a>, <a href="https://thunderstore.io/c/big-walk/p/BayTurtleKing/Big_Landing/">BigLanding</a>, <a href="https://thunderstore.io/c/big-walk/p/Yorimor/DayNightSettings/">DayNightSettings</a></li>
+<li>Create a <a href="https://unity.com/releases/editor/whats-new/6000.3.17f1">6000.3.17f1</a> Unity project with URP</li>
+<li>Download <a href="https://github.com/markviews/BigPuzzleSDK/releases">BigPuzzleSDK.unitypackage</a> and add to project</li>
+</ol>
+<h3 id="creating-first-puzzle">Creating first puzzle</h3>
+<p>This walks through a basic matching puzzle: a display shows three pictures, players find the matching tiles and hang them on the peg board, and the validator checks the answer.</p>
+<ol>
+<li><strong>Create the root.</strong> Create an empty GameObject and add <strong>Puzzle SDK</strong> to it (<strong>Add Component &gt; Big Puzzle SDK &gt; Puzzle SDK</strong>), with Puzzle Type set to <strong>Puzzle</strong>. Put it at the top of the Hierarchy, not inside another object, and place it where the puzzle should appear in the world. The SDK treats everything under this object as one puzzle, which is how the pieces find each other without wiring.</li>
+<li><strong>Add the other components.</strong> Drag these prefabs into the scene as <strong>children of the Puzzle SDK object</strong>:
+<ul>
+<li><a href="components.html#gourd-vice">Gourd Vice</a>: holds the gourd and releases it when the puzzle is won.</li>
+<li><a href="components.html#pillow">Pillow</a>: where the gourd goes if players won the puzzle before but lost the gourd.</li>
+<li><a href="components.html#start-switch">Start Switch</a>: players flip it to start the puzzle</li>
+<li><a href="components.html#confetti">Confetti</a>: fires when the puzzle is won</li>
+<li><a href="components.html#live-signal">Live Signal</a>: the lamp that shows the puzzle is running</li>
+<li><a href="components.html#door">Door</a>: shuts while the puzzle runs</li>
+</ul>
+<li><strong>Add a Peg Board and a Display.</strong> Drag in a <a href="components.html#peg-board">Peg Board</a> and a <a href="components.html#display">Display</a>. Select each one and set <strong>Size</strong> to 3 in the Inspector: the board gets 3 slots and the display gets 3 flaps. There's nothing to link: with one Peg Board and one Display of the same size, the board's Answer From fills itself in (slot 1 follows flap 1, and so on). The Inspector shows a green tick when it does.</li>
+<li><strong>Add at least 3 Peg Tiles.</strong> Drag in three or more <a href="components.html#peg-tile">Peg Tiles</a>. Select each one and change <strong>Image</strong> (and <strong>Image Set</strong> if you want another set) in the Inspector so every tile shows a different picture. When the puzzle starts, each flap on the display is dealt a different tile from these at random, and players have to hang the matching tiles on the board.</li>
+<li><strong>Add a Validator.</strong> Drag in a <a href="components.html#validator">Validator</a>. The Peg Board finds it by itself and keeps it up to date as players hang tiles. When the answer is right and gets checked, the Validator calls <code>Win()</code> for you. With a Gourd Vice that releases the gourd; with a Box, players win by picking the gourd up.</li>
+<li><strong>Edit position of PuzzleSDK transform.</strong> Start the game. Press <code>N</code> to fly to a position you like. Press <code>F7</code>, click <code>PlayerCharacter ...</code> in unity explorer. Copy the position / rotation to the PuzzleSDK transform. After loading your puzzle (testing steps below), find it in unity explorer and manually adjust the numbers until its position is good. Copy the numbers to Unity.</li>
+<li><strong>Import low poly assets.</strong> Find low poly assets for your puzzle and import them into the Unity project, use them! Search Unity asset store, itch.io, anywhere else.</li>
+</ol>
+<p>That's the whole puzzle! See <a href="components.html">Components</a> for more things you can do.</p>
+<figure class="shot" data-path="images/first-puzzle-components.png"><img src="images/first-puzzle-components.png" alt="The components placed in the Unity editor" loading="lazy" onerror="this.parentElement.classList.add('empty');this.remove()"><figcaption>Image goes here: <code>docs/images/first-puzzle-components.png</code></figcaption></figure>
+<h3 id="testing">Testing</h3>
+<ol>
+  <li>Click Tools &gt; Export Puzzle. Save to your r2modman plugins folder. Should be <code>%appdata%\r2modmanPlus-local\BigWalk\profiles\[profile name]\BepInEx\plugins</code></li>
+  <li>Start the game once with your puzzle installed so the mod creates its config file, then close it</li>
+  <li>Set <code>DevKeys = true</code> in r2modman config editor <code>BepInEx\config\markviews.BigPuzzleSDK.cfg</code></li>
+<li>Press <code>Control + F1</code> to teleport to your puzzle if you set a teleport Transform in PuzzleSDK</li>
+<li>Press <code>Control + F2</code> to hot reload your puzzle without restarting your game
+* Dev keys are disabled for everyone if someone joins with them disabled. This is to prevent accidentally pressing them while playing normally</li>
+</ol>
+<h3 id="sharing">Sharing</h3>
+<ol>
+<li>Click Tools &gt; Export Puzzle &gt; Export For Thunderstore</li>
+<li>Fill in your information, export</li>
+<li><a href="https://thunderstore.io/package/create/">Upload to thunderstore</a>. You will need to create an account and a "team"</li>
+</ol>
+</main>
+</div>
+</body>
+</html>

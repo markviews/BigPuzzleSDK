@@ -1,0 +1,1840 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Components - Big Puzzle SDK</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <a class="brand" href="getting-started.html">Big Puzzle SDK</a>
+    <nav class="tabs"><a href="getting-started.html">Getting started</a><a href="components.html" class="on">Components</a><a href="scripting.html">Scripting</a></nav>
+    <a class="gh" href="https://github.com/markviews/BigPuzzleSDK">GitHub</a>
+  </div>
+</header>
+<div class="page has-side">
+<nav class="side" aria-label="On this page"><ul><li class="grp"><a href="#contents">Contents</a></li><li class="grp"><a href="#essential-items">Essential Items</a><ul><li><a href="#puzzle-sdk">Puzzle SDK</a></li><li><a href="#gourd-vice">Gourd Vice</a></li><li><a href="#box">Box</a></li><li><a href="#start-switch">Start Switch</a></li><li><a href="#live-signal">Live Signal</a></li><li><a href="#confetti">Confetti</a></li><li><a href="#door">Door</a></li><li><a href="#pillow">Pillow</a></li></ul></li><li class="grp"><a href="#add-component-scripts">Add Component Scripts</a><ul><li><a href="#custom-item">Custom Item</a></li><li><a href="#seat">Seat</a></li><li><a href="#press-in-order">Press In Order</a></li><li><a href="#hider">Hider</a></li><li><a href="#presence-sensor">Presence Sensor</a></li><li><a href="#soundproof">Soundproof</a></li><li><a href="#radio-dead-zone">Radio Dead Zone</a></li><li><a href="#reverb-zone">Reverb Zone</a></li></ul></li><li class="grp"><a href="#buttons-and-switches">Buttons and Switches</a><ul><li><a href="#hold-button">Hold Button</a></li><li><a href="#n-hold-button">N-Hold Button</a></li><li><a href="#poke-button">Poke Button</a></li><li><a href="#sim-press-switch">Sim Press Switch</a></li><li><a href="#switch">Switch</a></li></ul></li><li class="grp"><a href="#pegs">Pegs</a><ul><li><a href="#circle-peg">Circle Peg</a></li><li><a href="#circle-peg-board">Circle Peg Board</a></li><li><a href="#display">Display</a></li><li><a href="#peg-board">Peg Board</a></li><li><a href="#peg-tile">Peg Tile</a></li><li><a href="#sound-peg">Sound Peg</a></li><li><a href="#sound-peg-answer">Sound Peg Answer</a></li><li><a href="#telescope">Telescope</a></li></ul></li><li class="grp"><a href="#feedback">Feedback</a><ul><li><a href="#count-input">Count Input</a></li><li><a href="#count-validator">Count Validator</a></li><li><a href="#light">Light</a></li><li><a href="#progress-bar">Progress Bar</a></li><li><a href="#timer">Timer</a></li><li><a href="#validator">Validator</a></li></ul></li><li class="grp"><a href="#tower">Tower</a><ul><li><a href="#gourd-plinth">Gourd Plinth</a></li><li><a href="#tower-button">Tower Button</a></li></ul></li><li class="grp"><a href="#other">Other</a><ul><li><a href="#firework-launcher">Firework Launcher</a></li><li><a href="#glass">Glass</a></li><li><a href="#intercom">Intercom</a></li><li><a href="#intercom-speaker">Intercom Speaker</a></li><li><a href="#no-items-gate">No Items Gate</a></li><li><a href="#timer-goal">Timer Goal</a></li><li><a href="#timer-spawner">Timer Spawner</a></li><li><a href="#vanilla-item">Vanilla Item</a></li></ul></li></ul></nav>
+<main>
+<h1 id="components">Components</h1>
+<p>Most components come as prefabs: drag them in from the SDK folder. A few are added from the Add Component menu; those are grouped together in <a href="#add-component-scripts">Add Component Scripts</a>.</p>
+<p>You can create some very complex puzzles without any C# scripting. <a href="#press-in-order">Press In Order</a> is a very useful one.</p>
+<h2 id="contents">Contents</h2>
+<ul>
+<li><strong>Essential Items</strong>: <a href="#puzzle-sdk">Puzzle SDK</a>, <a href="#gourd-vice">Gourd Vice</a>, <a href="#box">Box</a>, <a href="#start-switch">Start Switch</a>, <a href="#live-signal">Live Signal</a>, <a href="#confetti">Confetti</a>, <a href="#door">Door</a>, <a href="#pillow">Pillow</a></li>
+<li><strong>Add Component Scripts</strong>: <a href="#custom-item">Custom Item</a>, <a href="#seat">Seat</a>, <a href="#press-in-order">Press In Order</a>, <a href="#hider">Hider</a>, <a href="#presence-sensor">Presence Sensor</a>, <a href="#soundproof">Soundproof</a>, <a href="#radio-dead-zone">Radio Dead Zone</a>, <a href="#reverb-zone">Reverb Zone</a></li>
+<li><strong>Buttons and Switches</strong>: <a href="#hold-button">Hold Button</a>, <a href="#n-hold-button">N-Hold Button</a>, <a href="#poke-button">Poke Button</a>, <a href="#sim-press-switch">Sim Press Switch</a>, <a href="#switch">Switch</a></li>
+<li><strong>Pegs</strong>: <a href="#circle-peg">Circle Peg</a>, <a href="#circle-peg-board">Circle Peg Board</a>, <a href="#display">Display</a>, <a href="#peg-board">Peg Board</a>, <a href="#peg-tile">Peg Tile</a>, <a href="#sound-peg">Sound Peg</a>, <a href="#sound-peg-answer">Sound Peg Answer</a>, <a href="#telescope">Telescope</a></li>
+<li><strong>Feedback</strong>: <a href="#count-input">Count Input</a>, <a href="#count-validator">Count Validator</a>, <a href="#light">Light</a>, <a href="#progress-bar">Progress Bar</a>, <a href="#timer">Timer</a>, <a href="#validator">Validator</a></li>
+<li><strong>Tower</strong>: <a href="#gourd-plinth">Gourd Plinth</a>, <a href="#tower-button">Tower Button</a></li>
+<li><strong>Other</strong>: <a href="#firework-launcher">Firework Launcher</a>, <a href="#glass">Glass</a>, <a href="#intercom">Intercom</a>, <a href="#intercom-speaker">Intercom Speaker</a>, <a href="#no-items-gate">No Items Gate</a>, <a href="#timer-goal">Timer Goal</a>, <a href="#timer-spawner">Timer Spawner</a>, <a href="#vanilla-item">Vanilla Item</a></li>
+</ul>
+<hr />
+<h2 id="essential-items">Essential Items</h2>
+<h3 id="puzzle-sdk">Puzzle SDK</h3>
+<p><code>PuzzleSDK</code></p>
+<p>The puzzle's main component, one on the root object. The puzzle spawns in-game exactly where this object sits in your scene (position and rotation), and it tells you when the puzzle starts, stops and is won.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Debug Teleport</td>
+<td>Ctrl+F1 (creator keys on) teleports you here.</td>
+</tr>
+<tr>
+<td>Puzzle Type</td>
+<td><code>Puzzle</code>: rewards a gourd (needs one Gourd Vice or one Box to hold the gourd, and one Pillow). <code>Tower</code>: a gourd tower (needs 10+ Gourd Plinths). <code>None</code>: anything else.</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Fires when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>On Puzzle Start</td>
+<td>A Start Switch was flipped on.</td>
+</tr>
+<tr>
+<td>On Puzzle Stop</td>
+<td>The puzzle stopped. Also fires once when it spawns: set the starting look here.</td>
+</tr>
+<tr>
+<td>On Win</td>
+<td><code>Win()</code> was called.</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Value</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>IsWon</code> (bool)</td>
+<td><code>Win()</code> has been called.</td>
+</tr>
+<tr>
+<td><code>IsRunning</code> (bool)</td>
+<td>A Start Switch is on.</td>
+</tr>
+<tr>
+<td><code>PuzzleSDK.IsHost</code> (bool)</td>
+<td>True on the host and in single player. Functions that change the puzzle only work there.</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Function</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Win()</code></td>
+<td>Host only. Fires every Confetti and releases every Gourd Vice, then On Win.</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="gourd-vice">Gourd Vice</h3>
+<p><code>PuzzleGourdVice</code></p>
+<figure class="shot" data-path="images/components/gourd-vice.png"><img src="images/components/gourd-vice.png" alt="Gourd Vice" loading="lazy" onerror="this.parentElement.classList.add('empty');this.remove()"><figcaption>Image goes here: <code>docs/images/components/gourd-vice.png</code></figcaption></figure>
+<p>The game's gourd vice. <code>PuzzleSDK.Win()</code> releases it. Every <code>Puzzle</code> needs either a Gourd Vice or a <a href="#box">Box</a> to hold its gourd, not both.</p>
+<h3 id="box">Box</h3>
+<p><code>PuzzleBox</code></p>
+<figure class="shot" data-path="images/components/box.png"><img src="images/components/box.png" alt="Box" loading="lazy" onerror="this.parentElement.classList.add('empty');this.remove()"><figcaption>Image goes here: <code>docs/images/components/box.png</code></figcaption></figure>
+<p>The game's glass box with a lid. Starts closed.</p>
+<p>In a <code>Puzzle</code> with no Gourd Vice, the box holds the puzzle's gourd, and the box's glass and lid stop players reaching it until the box is open. Picking the gourd up completes the puzzle: there is no win event. The gourd is saved as held, in the tower, or lost, and is never put back in the box once someone has held it. A puzzle needs either a Gourd Vice or a Box; if it has both, only the vice's gourd is used.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Value</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>IsOpen</code> (bool)</td>
+<td>The lid is open.</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Function</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Open()</code></td>
+<td>Host only. Stays open until <code>Close()</code>.</td>
+</tr>
+<tr>
+<td><code>HoldToOpen()</code></td>
+<td>Host only. For a Hold Button's On Pressed: open while held.</td>
+</tr>
+<tr>
+<td><code>Close()</code></td>
+<td>Host only.</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="start-switch">Start Switch</h3>
+<p><code>PuzzleStartSwitch</code></p>
+<figure class="shot" data-path="images/components/start-switch.png"><img src="images/components/start-switch.png" alt="Start Switch" loading="lazy" onerror="this.parentElement.classList.add('empty');this.remove()"><figcaption>Image goes here: <code>docs/images/components/start-switch.png</code></figcaption></figure>
+<p>The game's start knob. On fires Puzzle SDK's On Puzzle Start, off fires On Puzzle Stop.</p>
+<h3 id="live-signal">Live Signal</h3>
+<p><code>PuzzleLiveSignal</code></p>
+<figure class="shot" data-path="images/components/live-signal.png"><img src="images/components/live-signal.png" alt="Live Signal" loading="lazy" onerror="this.parentElement.classList.add('empty');this.remove()"><figcaption>Image goes here: <code>docs/images/components/live-signal.png</code></figcaption></figure>
+<p>The game's "live" lamp. Lights by itself while the puzzle is running.</p>
+<h3 id="confetti">Confetti</h3>
+<p><code>PuzzleConfetti</code></p>
+<figure class="shot" data-path="images/components/confetti.png"><img src="images/components/confetti.png" alt="Confetti" loading="lazy" onerror="this.parentElement.classList.add('empty');this.remove()"><figcaption>Image goes here: <code>docs/images/components/confetti.png</code></figcaption></figure>
+<p>The game's confetti cannon. <code>PuzzleSDK.Win()</code> fires it.</p>
+<h3 id="door">Door</h3>
+<p><code>PuzzleDoor</code></p>
+<figure class="shot" data-path="images/components/door.png"><img src="images/components/door.png" alt="Door" loading="lazy" onerror="this.parentElement.classList.add('empty');this.remove()"><figcaption>Image goes here: <code>docs/images/components/door.png</code></figcaption></figure>
+<p>The game's double door.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Mode</td>
+<td><code>Open When Puzzle Active</code>: open while the puzzle is on, closed while it's off. <code>Close When Puzzle Active</code> (default): closed while the puzzle is on, open while it's off. <code>Control With Functions Only</code>: starts closed and only <code>Open()</code> / <code>Close()</code> move it. <code>Open()</code> and <code>Close()</code> still work in every mode.</td>
+</tr>
+<tr>
+<td>Soundproof</td>
+<td>Blocks voices while closed.</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Function</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Open()</code> / <code>Close()</code></td>
+<td>Host only.</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="pillow">Pillow</h3>
+<p><code>PuzzlePillow</code></p>
+<figure class="shot" data-path="images/components/pillow.png"><img src="images/components/pillow.png" alt="Pillow" loading="lazy" onerror="this.parentElement.classList.add('empty');this.remove()"><figcaption>Image goes here: <code>docs/images/components/pillow.png</code></figcaption></figure>
+<p>The game's gourd valet pillow. Hidden in-game. It appears, with the gourd on it, only if players won this puzzle but lost the gourd last time (it wasn't held or in the tower).</p>
+<hr />
+<h2 id="add-component-scripts">Add Component Scripts</h2>
+<p>These aren't prefabs. Add them to your own objects with <strong>Add Component</strong> &rarr; <strong>Big Puzzle SDK</strong>.</p>
+<h3 id="custom-item">Custom Item</h3>
+<p><code>PuzzleItem</code></p>
+<figure class="shot" data-path="images/components/custom-item.png"><img src="images/components/custom-item.png" alt="Custom Item" loading="lazy" onerror="this.parentElement.classList.add('empty');this.remove()"><figcaption>Image goes here: <code>docs/images/components/custom-item.png</code></figcaption></figure>
+<p>Your own model as an item players can pick up, carry and throw. Put it on an object with a mesh (or meshes under it). The game fits one box collider around all the meshes; colliders on the model are not used.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pivot</td>
+<td>Optional empty object marking where the item is held and spun when thrown, and which way it points. A yellow cross shows it in the Scene view. Empty = this object's origin.</td>
+</tr>
+<tr>
+<td>Mass</td>
+<td>1 is about a cowbell.</td>
+</tr>
+<tr>
+<td>Sounds</td>
+<td>Grab, release and bump sounds copied from a game item: <code>Peg</code>, <code>Cowbell</code>, <code>Buoy</code>, <code>Football</code>, <code>Cannonball</code>, <code>Torch</code>, <code>FoldingChair</code>, <code>WalkieTalkie</code>, <code>Binoculars</code>, <code>Kettle</code>, <code>NightVisionGoggles</code>, <code>LaserPointer</code>, <code>Clock</code>, <code>Pomodoro</code>, <code>Sign</code>, <code>FlareGun</code>, <code>Blindfold</code>, <code>Megaphone</code>, <code>SalonBrush</code>, <code>Laptop</code>, <code>FoldingMap</code>, <code>CoordinatesTracker</code>, <code>GourdHolder</code>, <code>GourdCradle</code>, <code>Key</code>, <code>PermoSign</code>.</td>
+</tr>
+<tr>
+<td>Can Belt / Can Backpack</td>
+<td>Players can put it on their belt / in their backpack.</td>
+</tr>
+<tr>
+<td>Saves On Reload</td>
+<td>Saved like gourds. If held (hand, belt or backpack) when the game saves or the host reloads (Ctrl+F2) it returns at the spawn area and stays saved as held while it lies there. Once put down elsewhere it only saves while held. Its position is never saved.</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Fires when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>On Picked Up</td>
+<td>Picked up or put in a backpack (host fires it).</td>
+</tr>
+<tr>
+<td>On Dropped</td>
+<td>Let go of.</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Value</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>IsHeld</code> (bool)</td>
+<td>Held (hand, belt or backpack).</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="seat">Seat</h3>
+<p><code>PuzzleSeat</code></p>
+<figure class="shot" data-path="images/components/seat.png"><img src="images/components/seat.png" alt="Seat" loading="lazy" onerror="this.parentElement.classList.add('empty');this.remove()"><figcaption>Image goes here: <code>docs/images/components/seat.png</code></figcaption></figure>
+<p>A seat players click to sit in (Jump to stand). Put it where the player's bottom goes. Your model stays as it is; the editor only draws the click box.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pose</td>
+<td>The game's seats: <code>MidcenturyChair</code>, <code>FoldingChair</code>, <code>WoodenChair</code>, <code>ListeningChair</code>, <code>CouchLeft</code>, <code>CouchMiddle</code>, <code>CouchRight</code>, <code>BenchA</code>, <code>BenchB</code>, <code>BenchC</code>, <code>Stump</code>, <code>CarouselPony</code>, <code>ChairliftLeft</code>, <code>ChairliftRight</code>, <code>TrainSeatA</code> to <code>TrainSeatE</code>.</td>
+</tr>
+<tr>
+<td>Seat Offset</td>
+<td>Where the bottom goes, from this object (green ball).</td>
+</tr>
+<tr>
+<td>Seat Turn</td>
+<td>Facing, degrees around up (green arrow).</td>
+</tr>
+<tr>
+<td>Click Center / Click Size</td>
+<td>The box players aim at (blue).</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Fires when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>On Sit</td>
+<td>A player sat (host fires it).</td>
+</tr>
+<tr>
+<td>On Stand</td>
+<td>The player got up.</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Value</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>IsOccupied</code> (bool)</td>
+<td>A player is sitting in it.</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="press-in-order">Press In Order</h3>
+<p><code>PuzzlePressInOrder</code></p>
+<p>Lights a random pair (a Light and its button) and waits for players to press that button. Each right press fills the Progress Bars by one and lights the next pair (it can repeat). A wrong button turns the lights off and fires On Fail.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pairs</td>
+<td>Rows of a Light and a Hold Button, Poke Button or Presence Sensor.</td>
+</tr>
+<tr>
+<td>Progress Bars</td>
+<td>All go up together on a right press.</td>
+</tr>
+<tr>
+<td>Rounds</td>
+<td>Right presses to win. <code>Begin()</code> sets every bar's Total to this.</td>
+</tr>
+<tr>
+<td>Hold At End</td>
+<td>Timed mode (below).</td>
+</tr>
+<tr>
+<td>Phase Seconds</td>
+<td>Timed mode: how long each pair stays lit. Default 5.</td>
+</tr>
+<tr>
+<td>Phase Bars</td>
+<td>Timed mode: bars that start full and drain through the phase. Use separate bars from Progress Bars.</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Fires when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>On Begin</td>
+<td><code>Begin()</code> was called.</td>
+</tr>
+<tr>
+<td>On Fail</td>
+<td>A wrong button was pressed, or the wrong buttons were held at the end of a phase. Every Progress Bar and Phase Bar gets <code>Fail()</code>.</td>
+</tr>
+<tr>
+<td>On End</td>
+<td>However it ended: win, <code>End()</code>, or after On Fail.</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Value</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>IsRunning</code> (bool)</td>
+<td>A round is in progress.</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Function</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Begin()</code></td>
+<td>Host only. Sets bar Totals, empties them, fires On Begin, lights a pair.</td>
+</tr>
+<tr>
+<td><code>End()</code></td>
+<td>Host only. Stops, calls <code>Fail()</code> on every bar, fires On End.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Hold At End:</strong> pressing does nothing during a phase. When the time is up the lit pair's button must be held and no other, or it fails. Use Hold Buttons or Presence Sensors; a Poke Button can't be held.</p>
+<h3 id="hider">Hider</h3>
+<p><code>PuzzleHider</code></p>
+<p>Keeps this object and everything under it only in the ticked lobby sizes. In other sizes it is switched off and SDK components under it aren't built. Use it for 2-, 3- and 4-player versions of a room.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Show 2 / Show 3 / Show 4</td>
+<td>Show in 2-, 3- and 4-player lobbies (4 includes larger).</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="presence-sensor">Presence Sensor</h3>
+<p><code>PuzzlePresenceSensor</code></p>
+<p>A button players press by standing in it. Add a Box (or other) Collider, at least 2 m tall and starting at the floor. It becomes an invisible trigger in-game. Works wherever a button does, including <a href="#press-in-order">Press In Order</a>.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Required Players</td>
+<td>Players needed inside at once. Default 1.</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Fires when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>On Pressed</td>
+<td>Enough players are inside.</td>
+</tr>
+<tr>
+<td>On Released</td>
+<td>Too few are left inside.</td>
+</tr>
+<tr>
+<td>On Player Entered</td>
+<td>A player steps in.</td>
+</tr>
+<tr>
+<td>On Player Left</td>
+<td>A player steps out.</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Value</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>PlayerCount</code> (int)</td>
+<td>Players inside now.</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="soundproof">Soundproof</h3>
+<p><code>PuzzleSoundProof</code></p>
+<p>Makes the colliders on this object and its children block voices, like the game's soundproof rooms. Put it on one wall or on the parent of a room. The host decides; everyone follows, late joiners included.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Material</td>
+<td><code>Wood</code> or <code>Glass</code>. Both block voices.</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Value</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>IsBlocking</code> (bool)</td>
+<td>Blocks voices and players. Starts true: call <code>Open()</code> from On Puzzle Stop to start open.</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Function</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Open()</code></td>
+<td>Host only. Colliders off: walk and talk through.</td>
+</tr>
+<tr>
+<td><code>Close()</code></td>
+<td>Host only. Blocks again.</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="radio-dead-zone">Radio Dead Zone</h3>
+<p><code>PuzzleRadioDeadZone</code></p>
+<p>Walkie-talkies and megaphones inside the collider(s) here can't send or receive. Add a Box (or other) Collider; it becomes an invisible trigger and any renderer is hidden.</p>
+<h3 id="reverb-zone">Reverb Zone</h3>
+<p><code>PuzzleReverbZone</code></p>
+<p>Sets a room's echo by hand while a player's ears are inside the collider(s) here (invisible triggers in-game). Anything not overridden is still measured by the game, which only "sees" its own world layers, including walls with Soundproof on them. Ordinary puzzle walls don't count.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Override Room Size / Room Size</td>
+<td>0 = tiny room, 1 = huge hall.</td>
+</tr>
+<tr>
+<td>Override Outdoorness / Outdoorness</td>
+<td>0 = enclosed, 1 = open air (no echo).</td>
+</tr>
+<tr>
+<td>Override Reverb Time / Reverb Time</td>
+<td>0 = no tail, 1 = very long.</td>
+</tr>
+<tr>
+<td>Override Diffusion / Diffusion</td>
+<td>0 = distinct echoes, 1 = smooth wash.</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="buttons-and-switches">Buttons and Switches</h2>
+<h3 id="hold-button">Hold Button</h3>
+<p><code>PuzzleButton</code></p>
+<figure class="shot" data-path="images/components/hold-button.png"><img src="images/components/hold-button.png" alt="Hold Button" loading="lazy" onerror="this.parentElement.classList.add('empty');this.remove()"><figcaption>Image goes here: <code>docs/images/components/hold-button.png</code></figcaption></figure>
+<p>The game's hold button. On Pressed when pushed in, On Released when let go. Wire On Pressed to <code>HoldToOpen()</code> on a Box or Gourd Plinth for "open while held".</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Fires when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>On Pressed</td>
+<td>Pushed in.</td>
+</tr>
+<tr>
+<td>On Released</td>
+<td>Let go.</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="n-hold-button">N-Hold Button</h3>
+<p><code>PuzzleButtonNHold</code></p>
+<figure class="shot" data-path="images/components/n-hold-button.png"><img src="images/components/n-hold-button.png" alt="N-Hold Button" loading="lazy" onerror="this.parentElement.classList.add('empty');this.remove()"><figcaption>Image goes here: <code>docs/images/components/n-hold-button.png</code></figcaption></figure>
+<p>The game's N-hold button (Black Tower). Every button with the same Group must be held at once. The case shows 2, 3 or 4 dots for the group size and a dot lights per held button. Every button in the group fires its events, so wire them on only one.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Group</td>
+<td>Buttons in this puzzle with the same group are held together.</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Fires when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>On All Held</td>
+<td>Every button in the group is held.</td>
+</tr>
+<tr>
+<td>On All Released</td>
+<td>They were all held, and one was let go.</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Value</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>IsHeld</code> (bool)</td>
+<td>This button is held.</td>
+</tr>
+<tr>
+<td><code>AllHeld</code> (bool)</td>
+<td>The whole group is held.</td>
+</tr>
+<tr>
+<td><code>GroupSize</code> (int)</td>
+<td>Switched-on buttons in the group.</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="poke-button">Poke Button</h3>
+<p><code>PuzzlePokeButton</code></p>
+<figure class="shot" data-path="images/components/poke-button.png"><img src="images/components/poke-button.png" alt="Poke Button" loading="lazy" onerror="this.parentElement.classList.add('empty');this.remove()"><figcaption>Image goes here: <code>docs/images/components/poke-button.png</code></figcaption></figure>
+<p>The game's one-click button. After a press it stays off until re-armed.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Auto Enable Seconds</td>
+<td>0 = stays off after a press, otherwise it re-arms after this long.</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Fires when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>On Pressed</td>
+<td>Poked.</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Value</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>IsClickable</code> (bool)</td>
+<td>Can be poked. Always starts true: call <code>SetClickable(false)</code> from On Puzzle Stop to start it off.</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Function</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SetClickable(bool value)</code></td>
+<td>Host only. true also re-arms a button just pressed.</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="sim-press-switch">Sim Press Switch</h3>
+<p><code>PuzzleSimPressSwitch</code></p>
+<figure class="shot" data-path="images/components/sim-press-switch.png"><img src="images/components/sim-press-switch.png" alt="Sim Press Switch" loading="lazy" onerror="this.parentElement.classList.add('empty');this.remove()"><figcaption>Image goes here: <code>docs/images/components/sim-press-switch.png</code></figcaption></figure>
+<p>The game's "press together" lever. Pressed, it goes yellow, then red, then off. If every switch in the Group is yellow at once, all go green and fire On Success.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Active Seconds</td>
+<td>Yellow: the window for the others to be pressed.</td>
+</tr>
+<tr>
+<td>Timeout Seconds</td>
+<td>Red (or green after success): time before it can be pressed again.</td>
+</tr>
+<tr>
+<td>Group</td>
+<td>Switches in this puzzle with the same group are linked.</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Fires when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>On Success</td>
+<td>Every switch in the group was pressed in time.</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="switch">Switch</h3>
+<p><code>PuzzleSwitch</code></p>
+<figure class="shot" data-path="images/components/switch.png"><img src="images/components/switch.png" alt="Switch" loading="lazy" onerror="this.parentElement.classList.add('empty');this.remove()"><figcaption>Image goes here: <code>docs/images/components/switch.png</code></figcaption></figure>
+<p>The game's light switch.</p>
+<p>Always starts off. Its position is saved with the game, so after the lobby restarts it comes back as it was (and the matching event fires).</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Fires when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>On Turned On / On Turned Off</td>
+<td>Flipped on / off.</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Value</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>IsOn</code> (bool)</td>
+<td>Flipped on.</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="pegs">Pegs</h2>
+<h3 id="circle-peg">Circle Peg</h3>
+<p><code>PuzzleCirclePeg</code></p>
+<figure class="shot" data-path="images/components/circle-peg.png"><img src="images/components/circle-peg.png" alt="Circle Peg" loading="lazy" onerror="this.parentElement.classList.add('empty');this.remove()"><figcaption>Image goes here: <code>docs/images/components/circle-peg.png</code></figcaption></figure>
+<p>The game's round peg (Egg Hunt), a grabbable prop for the circle peg board.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Color</td>
+<td>White = the game's own (red).</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="circle-peg-board">Circle Peg Board</h3>
+<p><code>PuzzleCirclePegBoard</code></p>
+<figure class="shot" data-path="images/components/circle-peg-board.png"><img src="images/components/circle-peg-board.png" alt="Circle Peg Board" loading="lazy" onerror="this.parentElement.classList.add('empty');this.remove()"><figcaption>Image goes here: <code>docs/images/components/circle-peg-board.png</code></figcaption></figure>
+<p>The game's round peg board (Egg Hunt).</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Fires when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>On Full</td>
+<td>Every slot has a peg.</td>
+</tr>
+<tr>
+<td>On Not Full</td>
+<td>A peg was taken off a full board.</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Value</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SlotCount</code> / <code>FilledCount</code> (int)</td>
+<td>Slots, and slots with a peg.</td>
+</tr>
+<tr>
+<td><code>IsFull</code> (bool)</td>
+<td>Every slot has a peg.</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="display">Display</h3>
+<p><code>PuzzleDisplay</code></p>
+<figure class="shot" data-path="images/components/display.png"><img src="images/components/display.png" alt="Display" loading="lazy" onerror="this.parentElement.classList.add('empty');this.remove()"><figcaption>Image goes here: <code>docs/images/components/display.png</code></figcaption></figure>
+<p>The game's split-flap image display. Every time the puzzle starts each of its flaps takes a different Peg Tile from the puzzle and shows that tile's picture (any image set). Every tile counts the same, so with ten triangles and one circle it will most likely show a triangle, and a picture only repeats if the puzzle really has more than one tile of it. If the puzzle has fewer tiles than flaps, the extra flaps stay blank (the editor warns about this when the puzzle has a Peg Board). It is blank before the first start and goes blank again when the puzzle stops (a puzzle with no Start Switch picks once at spawn). A Peg Board can use it as its answer.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Size</td>
+<td>How many flaps the frame has: 1, 2, 3 or 5 (the game's frames). Defaults to 1. Each flap shows its own picture, numbered from the left (flap 1 is the far left), and each takes its own tile from the puzzle. A Peg Board picks which flap each of its slots follows. For a 4-flap display, combine a 2 and a 2 (or however you like). Ignored when Copy Display is set: a copy always takes the size of the display it follows, so it can copy every flap.</td>
+</tr>
+<tr>
+<td>Copy Display</td>
+<td>Optional. Always shows whatever the other display shows, flap for flap, with the same flip. It takes no tile of its own, so it doesn't count towards the number of tiles needed. A loop of copies stays blank.</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Value</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Image</code> (int)</td>
+<td>Image shown on flap 1 (0 = blank).</td>
+</tr>
+<tr>
+<td><code>GetImage(int flap)</code></td>
+<td>Image shown on a flap (1 is the far left; 0 = blank).</td>
+</tr>
+<tr>
+<td><code>ImageSet</code> (PuzzleImageSet)</td>
+<td>The set shown.</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="peg-board">Peg Board</h3>
+<p><code>PuzzlePegBoard</code></p>
+<figure class="shot" data-path="images/components/peg-board.png"><img src="images/components/peg-board.png" alt="Peg Board" loading="lazy" onerror="this.parentElement.classList.add('empty');this.remove()"><figcaption>Image goes here: <code>docs/images/components/peg-board.png</code></figcaption></figure>
+<p>The game's peg board, 1 to 6 slots or 12 (two rows of six). Checks hung tiles against the answer, set per slot with Answer From.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Size</td>
+<td>Slots. 12 = two rows of six.</td>
+</tr>
+<tr>
+<td>Start Marker</td>
+<td>Marker at the first slot's end. Looks only.</td>
+</tr>
+<tr>
+<td>Answer From</td>
+<td>One dropdown per slot listing the Displays and Sound Peg Answers in the puzzle. For a Display with more than one flap, pick the flap too (flap 1 is the far left). If the puzzle has only one Peg Board and only one Display with as many flaps as the board has slots, this fills itself in (slot 1 follows flap 1, and so on). The answer follows them. A slot left on None can never be correct.</td>
+</tr>
+<tr>
+<td>Validator</td>
+<td>Optional. Left empty, the puzzle's only Validator is used. Kept up to date for you: correct = <code>SetCorrect(true)</code> + <code>TurnOn()</code>, wrong = <code>SetCorrect(false)</code> + <code>TurnOn()</code>, pegs missing = <code>SetCorrect(false)</code> + <code>TurnOff()</code>.</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Fires when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>On Correct</td>
+<td>A peg changed and the board matches.</td>
+</tr>
+<tr>
+<td>On Incorrect</td>
+<td>A peg changed; full but wrong.</td>
+</tr>
+<tr>
+<td>On Missing Pegs</td>
+<td>A peg changed; slots still empty.</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Value</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SlotCount</code> (int)</td>
+<td>Slots on the board.</td>
+</tr>
+<tr>
+<td><code>IsCorrect</code> (bool)</td>
+<td>Matches the answer now.</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Function</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GetSlot(int slot) → PegSlot</code></td>
+<td>What is in a slot (0 is the first).</td>
+</tr>
+</tbody>
+</table></div>
+<p><code>PegSlot</code> fields: <code>Type</code> (<code>Empty</code>, <code>Image</code>, <code>Sound</code>), <code>ImageSet</code> and <code>Image</code> (Image only; -1 if unknown), <code>Sound</code> (Sound only).</p>
+<pre><code>PegSlot s = board.GetSlot(2);
+if (s.Type == PuzzlePegType.Sound) Debug.Log("sound " + s.Sound);
+</code></pre>
+<h3 id="peg-tile">Peg Tile</h3>
+<p><code>PuzzlePegTile</code></p>
+<figure class="shot" data-path="images/components/peg-tile.png"><img src="images/components/peg-tile.png" alt="Peg Tile" loading="lazy" onerror="this.parentElement.classList.add('empty');this.remove()"><figcaption>Image goes here: <code>docs/images/components/peg-tile.png</code></figcaption></figure>
+<p>A game peg tile showing one picture. Players carry it and hang it on a Peg Board.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Image Set</td>
+<td><code>Shapes</code>, <code>Peg</code>, <code>Emotes</code>, <code>Scribbles</code>, <code>Custom</code>.</td>
+</tr>
+<tr>
+<td>Image</td>
+<td>Picture number in the set.</td>
+</tr>
+<tr>
+<td>Custom Sheet</td>
+<td>For Custom: one square texture, 4 x 4 grid, top-left cell blank, then images 1 to 8.</td>
+</tr>
+<tr>
+<td>Invisible Ink View</td>
+<td>Only shows through a telescope with Invisible Ink View on; otherwise blank.</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Value</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ImageSet</code> (PuzzlePegSet) / <code>Image</code> (int)</td>
+<td>The set and picture number.</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="sound-peg">Sound Peg</h3>
+<p><code>PuzzleSoundPeg</code></p>
+<figure class="shot" data-path="images/components/sound-peg.png"><img src="images/components/sound-peg.png" alt="Sound Peg" loading="lazy" onerror="this.parentElement.classList.add('empty');this.remove()"><figcaption>Image goes here: <code>docs/images/components/sound-peg.png</code></figcaption></figure>
+<p>The game's speaker peg tile: a grabbable tile that plays a tune.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sound</td>
+<td>One of nine tracks, looping in sync: <code>Sound1</code> to <code>Sound9</code>.</td>
+</tr>
+<tr>
+<td>Custom Clip</td>
+<td>Plays instead of the track. Won't stay in step with the tracks.</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Value</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Sound</code> (PuzzleSoundTrack)</td>
+<td>The track it plays.</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="sound-peg-answer">Sound Peg Answer</h3>
+<p><code>PuzzleSoundPegAnswer</code></p>
+<figure class="shot" data-path="images/components/sound-peg-answer.png"><img src="images/components/sound-peg-answer.png" alt="Sound Peg Answer" loading="lazy" onerror="this.parentElement.classList.add('empty');this.remove()"><figcaption>Image goes here: <code>docs/images/components/sound-peg-answer.png</code></figcaption></figure>
+<p>The game's fixed speaker that plays the tune to match. Every time the puzzle starts it plays the sound of a different Sound Peg from the puzzle (a sound only repeats if the puzzle has more than one peg with it), and it is silent while the puzzle is off. With fewer Sound Pegs than speakers, the extra speakers stay silent (the editor warns about this when the puzzle has a Peg Board). A Peg Board can use it as its answer. It has no fields.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Value</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>CurrentSound</code> (string)</td>
+<td>What it plays: <code>sound_1</code> to <code>sound_9</code>, or <code>sound_</code> and a custom name; empty while silent.</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="telescope">Telescope</h3>
+<p><code>PuzzleTelescope</code></p>
+<figure class="shot" data-path="images/components/telescope.png"><img src="images/components/telescope.png" alt="Telescope" loading="lazy" onerror="this.parentElement.classList.add('empty');this.remove()"><figcaption>Image goes here: <code>docs/images/components/telescope.png</code></figcaption></figure>
+<p>The game's fixed telescope.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Invisible Ink View</td>
+<td>On: the Invisible Ink challenge's filter, which shows peg tiles that have Invisible Ink View on. Off (the default): a plain telescope.</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="feedback">Feedback</h2>
+<h3 id="count-input">Count Input</h3>
+<p><code>PuzzleCountInput</code></p>
+<figure class="shot" data-path="images/components/count-input.png"><img src="images/components/count-input.png" alt="Count Input" loading="lazy" onerror="this.parentElement.classList.add('empty');this.remove()"><figcaption>Image goes here: <code>docs/images/components/count-input.png</code></figcaption></figure>
+<p>The game's counter with + and - buttons (Perspective Counting), 0 to 99. Point a Count Validator's Input at it, or use On Value Changed.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Fires when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>On Value Changed</td>
+<td>The number changed (button or <code>SetValue</code>).</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Value</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Value</code> (int)</td>
+<td>The number.</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Function</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SetValue(int value)</code></td>
+<td>Host only. Kept between 0 and 99.</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="count-validator">Count Validator</h3>
+<p><code>PuzzleCountValidator</code></p>
+<figure class="shot" data-path="images/components/count-validator.png"><img src="images/components/count-validator.png" alt="Count Validator" loading="lazy" onerror="this.parentElement.classList.add('empty');this.remove()"><figcaption>Image goes here: <code>docs/images/components/count-validator.png</code></figcaption></figure>
+<p>The game's counter validator (Perspective Counting). Shows 00 until <code>Check()</code>, then its dials count up to the answer a script sets with <code>SetAnswer</code> (never right until it is set) and it shows a tick or cross. Changing the counter afterwards resets it to 00.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Input</td>
+<td>The counter it checks. Left empty, the puzzle's only Count Input is used.</td>
+</tr>
+<tr>
+<td>Poke Button</td>
+<td>Optional. Pressing it calls <code>Check()</code>; it turns on and off with the screen and re-arms after each result (Auto Enable Seconds is locked at 0).</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Fires when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>On Incorrect</td>
+<td><code>Check()</code> found a wrong number. (The right number wins the puzzle: <code>PuzzleSDK.Win()</code>.)</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Value</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Answer</code> (int)</td>
+<td>The number <code>Check()</code> wants; -1 until <code>SetAnswer</code> is called.</td>
+</tr>
+<tr>
+<td><code>IsCorrect</code> (bool)</td>
+<td>The Input matched at the last check.</td>
+</tr>
+<tr>
+<td><code>IsChecking</code> (bool)</td>
+<td>Dials counting, result not shown yet.</td>
+</tr>
+<tr>
+<td><code>IsOn</code> (bool)</td>
+<td>The screen is on.</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Function</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Check()</code></td>
+<td>Host only.</td>
+</tr>
+<tr>
+<td><code>SetAnswer(int value)</code></td>
+<td>Host only. Sets the answer (0 to 99); back to 00 (an off screen stays off).</td>
+</tr>
+<tr>
+<td><code>TurnOn()</code> / <code>TurnOff()</code></td>
+<td>Host only. <code>Check()</code> does nothing while off. The screen is always off while the puzzle is switched off; these are remembered and applied when it starts.</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="light">Light</h3>
+<p><code>PuzzleLight</code></p>
+<figure class="shot" data-path="images/components/light.png"><img src="images/components/light.png" alt="Light" loading="lazy" onerror="this.parentElement.classList.add('empty');this.remove()"><figcaption>Image goes here: <code>docs/images/components/light.png</code></figcaption></figure>
+<p>A game lamp (Conductor is the small panel light). Starts off: call <code>TurnOn()</code> from On Puzzle Stop to start it on. With it selected in Unity, the Scene view draws its Range and Spot Angle (spotlights show the beam stopping at the first collider). It's only a guide.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Type</td>
+<td><code>TableRed</code>, <code>Pendant</code>, <code>Spotlight_Black</code>, <code>Spotlight_Red</code>, <code>Tube</code>, <code>Circle</code>, <code>Ring</code>, <code>Conductor</code>.</td>
+</tr>
+<tr>
+<td>Color</td>
+<td>White keeps the lamp's own colour.</td>
+</tr>
+<tr>
+<td>Range</td>
+<td>Metres. 0 = the lamp's own (the mod log lists them).</td>
+</tr>
+<tr>
+<td>Intensity</td>
+<td>Brightness while on. 0 = the lamp's own.</td>
+</tr>
+<tr>
+<td>Spot Angle</td>
+<td>Cone width in degrees, spotlights only. 0 = the lamp's own.</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Value</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>CurrentColor</code> (Color)</td>
+<td>The lamp's colour.</td>
+</tr>
+<tr>
+<td><code>IsOn</code> (bool)</td>
+<td>The lamp is on.</td>
+</tr>
+<tr>
+<td><code>IsParty</code> (bool)</td>
+<td>Party mode is running.</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Function</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TurnOn()</code> / <code>TurnOff()</code></td>
+<td>Host only.</td>
+</tr>
+<tr>
+<td><code>SetColor(string hex)</code></td>
+<td>"#FF0000", "FF0000", "#F00" or a name like "red".</td>
+</tr>
+<tr>
+<td><code>StartParty()</code></td>
+<td>Host only. Blends through random bright colours, each held 1.5 to 6 s, never fully dark, with a gentle pulse. For <code>Spotlight_Black</code>.</td>
+</tr>
+<tr>
+<td><code>StopParty()</code></td>
+<td>Host only. Fades back to white over a second; the lamp stays on. <code>TurnOn()</code>, <code>TurnOff()</code> and <code>SetColor()</code> also end it.</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="progress-bar">Progress Bar</h3>
+<p><code>PuzzleProgressBar</code></p>
+<figure class="shot" data-path="images/components/progress-bar.png"><img src="images/components/progress-bar.png" alt="Progress Bar" loading="lazy" onerror="this.parentElement.classList.add('empty');this.remove()"><figcaption>Image goes here: <code>docs/images/components/progress-bar.png</code></figcaption></figure>
+<p>The game's dot-matrix progress bar. Can be scaled. Its look is automatic: a flash on <code>Increment()</code>, victory when full, failure after <code>Fail()</code>.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Style</td>
+<td><code>Straight</code> or <code>Spiral</code> (Memory Bombs).</td>
+</tr>
+<tr>
+<td>Total</td>
+<td>Progress at which it is full.</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Fires when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>On Full</td>
+<td>The bar became full.</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Value</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Total</code> (int)</td>
+<td>Progress at which it is full.</td>
+</tr>
+<tr>
+<td><code>Progress</code> (int)</td>
+<td>Current progress. Starts at 0.</td>
+</tr>
+<tr>
+<td><code>IsFull</code> (bool)</td>
+<td>The bar is full.</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Function</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SetTotal(int value)</code></td>
+<td>Host only. Progress above it is cut down.</td>
+</tr>
+<tr>
+<td><code>Increment()</code></td>
+<td>Host only. +1, nothing once full.</td>
+</tr>
+<tr>
+<td><code>Fail()</code></td>
+<td>Host only. Failure look for a second, then empties.</td>
+</tr>
+<tr>
+<td><code>Reset()</code></td>
+<td>Host only. Empty, normal look.</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="timer">Timer</h3>
+<p><code>PuzzleTimer</code></p>
+<figure class="shot" data-path="images/components/timer.png"><img src="images/components/timer.png" alt="Timer" loading="lazy" onerror="this.parentElement.classList.add('empty');this.remove()"><figcaption>Image goes here: <code>docs/images/components/timer.png</code></figcaption></figure>
+<p>The game's countdown clock. Can be scaled.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Duration</td>
+<td>Seconds it counts down from.</td>
+</tr>
+<tr>
+<td>Progress Bars</td>
+<td>Optional. These bars drain from full to empty as the time runs out.</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Fires when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>On Finished</td>
+<td>It reached 0:00.</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Value</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Duration</code> (float)</td>
+<td>Seconds it counts down from.</td>
+</tr>
+<tr>
+<td><code>TimeLeft</code> (float)</td>
+<td>Seconds left.</td>
+</tr>
+<tr>
+<td><code>IsRunning</code> (bool)</td>
+<td>Counting down.</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Function</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>StartTimer()</code></td>
+<td>Host only. Starts from the full duration, or continues if paused.</td>
+</tr>
+<tr>
+<td><code>PauseTimer()</code></td>
+<td>Host only.</td>
+</tr>
+<tr>
+<td><code>ResetTimer()</code></td>
+<td>Host only. Stops and shows 00:00.</td>
+</tr>
+<tr>
+<td><code>SetDuration(float seconds)</code></td>
+<td>Host only. Used from the next start after a reset or finish.</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="validator">Validator</h3>
+<p><code>PuzzleValidator</code></p>
+<figure class="shot" data-path="images/components/validator.png"><img src="images/components/validator.png" alt="Validator" loading="lazy" onerror="this.parentElement.classList.add('empty');this.remove()"><figcaption>Image goes here: <code>docs/images/components/validator.png</code></figcaption></figure>
+<p>The game's check / cross screen. Set the answer with <code>SetCorrect</code>, then <code>Check()</code> plays a 5-second animation and shows the result. It is always off while the puzzle is switched off; <code>TurnOn()</code> / <code>TurnOff()</code> are remembered and applied when the puzzle starts.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Poke Button</td>
+<td>Optional. Pressing it calls <code>Check()</code>; it turns on and off with the screen and re-arms after each result (Auto Enable Seconds is locked at 0).</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Fires when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>On Incorrect</td>
+<td>After <code>Check()</code>: the answer was wrong. (Right wins the puzzle: <code>PuzzleSDK.Win()</code>.)</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Value</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>IsCorrect</code> (bool)</td>
+<td>The answer last set.</td>
+</tr>
+<tr>
+<td><code>IsOn</code> (bool)</td>
+<td>The screen is on.</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Function</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SetCorrect(bool value)</code></td>
+<td>Host only. Nothing shows until <code>Check()</code>.</td>
+</tr>
+<tr>
+<td><code>Check()</code></td>
+<td>Host only. Does nothing while off.</td>
+</tr>
+<tr>
+<td><code>TurnOn()</code></td>
+<td>Host only. Blank, ready to check. While the puzzle is off it is only remembered and shows when the puzzle starts.</td>
+</tr>
+<tr>
+<td><code>TurnOff()</code></td>
+<td>Host only. Cancels a check in progress.</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="tower">Tower</h2>
+<h3 id="gourd-plinth">Gourd Plinth</h3>
+<p><code>PuzzleGourdPlinth</code></p>
+<figure class="shot" data-path="images/components/gourd-plinth.png"><img src="images/components/gourd-plinth.png" alt="Gourd Plinth" loading="lazy" onerror="this.parentElement.classList.add('empty');this.remove()"><figcaption>Image goes here: <code>docs/images/components/gourd-plinth.png</code></figcaption></figure>
+<p>One slot of the gourd tower. Open its flap and players can place a gourd (it can't be taken back). Starts closed.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Fires when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>On Gourd Placed</td>
+<td>A gourd was placed.</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Value</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>IsOpen</code> (bool)</td>
+<td>The flap is open.</td>
+</tr>
+<tr>
+<td><code>HasGourd</code> (bool)</td>
+<td>A gourd is in the slot.</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Function</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Open()</code></td>
+<td>Host only. Stays open until <code>Close()</code>.</td>
+</tr>
+<tr>
+<td><code>HoldToOpen()</code></td>
+<td>Host only. For a Hold Button's On Pressed: open while held.</td>
+</tr>
+<tr>
+<td><code>Close()</code></td>
+<td>Host only.</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="tower-button">Tower Button</h3>
+<p><code>TowerButton</code></p>
+<p>For a modded gourd tower. Goes next to the Hold Button players hold. While held, the first plinth without a gourd is open. In-game only as many plinths stay as there are modded puzzles loaded.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Plinths</td>
+<td>The plinths in the order they fill, bottom first.</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Value</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SlotCount</code> (int)</td>
+<td>Plinths in use.</td>
+</tr>
+<tr>
+<td><code>FilledCount</code> (int)</td>
+<td>Plinths with a gourd.</td>
+</tr>
+<tr>
+<td><code>IsFull</code> (bool)</td>
+<td>Every plinth in use has a gourd.</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="other">Other</h2>
+<h3 id="firework-launcher">Firework Launcher</h3>
+<p><code>PuzzleFireworkLauncher</code></p>
+<figure class="shot" data-path="images/components/firework-launcher.png"><img src="images/components/firework-launcher.png" alt="Firework Launcher" loading="lazy" onerror="this.parentElement.classList.add('empty');this.remove()"><figcaption>Image goes here: <code>docs/images/components/firework-launcher.png</code></figcaption></figure>
+<p>The game's flare launcher (Flare Run), without its button.</p>
+<p class="warn"><strong>Warning:</strong> It spawns the wrong particles.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Color</td>
+<td>Flare's sparks and light. White = the game's own.</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Function</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Fire()</code></td>
+<td>Host only. Ignored while cooling down.</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="glass">Glass</h3>
+<p><code>PuzzleGlass</code></p>
+<figure class="shot" data-path="images/components/glass.png"><img src="images/components/glass.png" alt="Glass" loading="lazy" onerror="this.parentElement.classList.add('empty');this.remove()"><figcaption>Image goes here: <code>docs/images/components/glass.png</code></figcaption></figure>
+<p>Turns this object's mesh into the game's puzzle glass: any mesh, any size (a scaled cube makes a pane). In-game it gets the game's glass material and muffles or blocks voices. Also works on a parent for all meshes under it. The editor shows a preview.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Style</td>
+<td><code>Window</code>, <code>Rippled</code> (gourd boxes), <code>Clear</code>.</td>
+</tr>
+<tr>
+<td>Sound</td>
+<td><code>Muffles</code>, <code>Thick</code> (more muffled), <code>Soundproof</code> (blocks voices).</td>
+</tr>
+<tr>
+<td>Wire</td>
+<td>Adds the black wire mesh of the soundproof windows.</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="intercom">Intercom</h3>
+<p><code>PuzzleIntercom</code></p>
+<figure class="shot" data-path="images/components/intercom.png"><img src="images/components/intercom.png" alt="Intercom" loading="lazy" onerror="this.parentElement.classList.add('empty');this.remove()"><figcaption>Image goes here: <code>docs/images/components/intercom.png</code></figcaption></figure>
+<p>The game's wall microphone. Players hold it to talk to intercom speakers.</p>
+<p class="warn"><strong>Warning:</strong> This doesn't work yet.</p>
+<h3 id="intercom-speaker">Intercom Speaker</h3>
+<p><code>PuzzleIntercomSpeaker</code></p>
+<figure class="shot" data-path="images/components/intercom-speaker.png"><img src="images/components/intercom-speaker.png" alt="Intercom Speaker" loading="lazy" onerror="this.parentElement.classList.add('empty');this.remove()"><figcaption>Image goes here: <code>docs/images/components/intercom-speaker.png</code></figcaption></figure>
+<p>The game's wall speaker that plays what is said into an intercom.</p>
+<p class="warn"><strong>Warning:</strong> This doesn't work yet.</p>
+<h3 id="no-items-gate">No Items Gate</h3>
+<p><code>PuzzleNoItemsGate</code></p>
+<figure class="shot" data-path="images/components/no-items-gate.png"><img src="images/components/no-items-gate.png" alt="No Items Gate" loading="lazy" onerror="this.parentElement.classList.add('empty');this.remove()"><figcaption>Image goes here: <code>docs/images/components/no-items-gate.png</code></figcaption></figure>
+<p>The game's turnstile: players pass one at a time.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>One Way</td>
+<td>On: front to back only (red plaques). Off: both ways (green).</td>
+</tr>
+<tr>
+<td>Blind Mask</td>
+<td>Off: the plain turnstile. On: the blindfold catwalk's.</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="timer-goal">Timer Goal</h3>
+<p><code>PuzzleTimerGoal</code></p>
+<figure class="shot" data-path="images/components/timer-goal.png"><img src="images/components/timer-goal.png" alt="Timer Goal" loading="lazy" onerror="this.parentElement.classList.add('empty');this.remove()"><figcaption>Image goes here: <code>docs/images/components/timer-goal.png</code></figcaption></figure>
+<p>The game's holder for a timer ball (Obby).</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Fires when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>On Timer Placed</td>
+<td>A timer ball went in.</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="timer-spawner">Timer Spawner</h3>
+<p><code>PuzzleTimerSpawner</code></p>
+<figure class="shot" data-path="images/components/timer-spawner.png"><img src="images/components/timer-spawner.png" alt="Timer Spawner" loading="lazy" onerror="this.parentElement.classList.add('empty');this.remove()"><figcaption>Image goes here: <code>docs/images/components/timer-spawner.png</code></figcaption></figure>
+<p>The game's timer ball dispenser (Obby). Picking up the ball starts its countdown; at zero it returns to the dispenser.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Time</td>
+<td>Seconds the ball lasts, also the wait for a new one. The game's is 10.</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="vanilla-item">Vanilla Item</h3>
+<p><code>PuzzleVanillaItem</code></p>
+<figure class="shot" data-path="images/components/vanilla-item.png"><img src="images/components/vanilla-item.png" alt="Vanilla Item" loading="lazy" onerror="this.parentElement.classList.add('empty');this.remove()"><figcaption>Image goes here: <code>docs/images/components/vanilla-item.png</code></figcaption></figure>
+<p>One of the game's own items, copied as it is.</p>
+<p class="warn"><strong>Warning:</strong> The Flare Gun spawns the wrong particles.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Item Type</td>
+<td><code>Blindfold</code>, <code>FoldingChair</code>, <code>Torch</code>, <code>FmRadio</code>, <code>WalkieTalkie</code>, <code>Binoculars</code>, <code>XrayGoggles</code>, <code>Clock</code>, <code>Laser</code>, <code>Megaphone</code>, <code>Kettle</code>, <code>CannonBall</code>, <code>PermoSign</code>, <code>SpareSign</code>, <code>GourdHolder</code>, <code>Belt</code>, <code>Backpack</code>, <code>Gps</code>, <code>FoldingMap</code>, <code>Compass</code>, <code>FlareGun</code>, <code>CowbellBig</code>, <code>CowbellMedium</code>, <code>CowbellSmall</code>, <code>Paintbrush</code>, <code>Football</code>, <code>Buoy</code> (the buoy light), <code>BuoyRed</code>.</td>
+</tr>
+<tr>
+<td>Include Base</td>
+<td>Buoy and Buoy Red only. Ticked (the default): the buoy comes on its pedestal. Unticked: just the buoy, a loose item where this object is. The buoy's light on/off state is saved with the game.</td>
+</tr>
+<tr>
+<td>Default Text</td>
+<td>Signs only. Spare Sign: text until a player writes (saved with the game). Permo Sign: fixed text.</td>
+</tr>
+<tr>
+<td>Item Color</td>
+<td>Kettle, Walkie Talkie, Backpack, Belt, Flare Gun. White keeps the game's colour.</td>
+</tr>
+<tr>
+<td>Flare Color</td>
+<td>Flare Gun only. White keeps the game's colour.</td>
+</tr>
+<tr>
+<td>Saves On Reload</td>
+<td>Saved like gourds (see <a href="#custom-item">Custom Item</a>).</td>
+</tr>
+</tbody>
+</table></div>
+</main>
+</div>
+</body>
+</html>

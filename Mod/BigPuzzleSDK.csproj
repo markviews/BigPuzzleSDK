@@ -1,0 +1,70 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <AssemblyName>BigPuzzleSDK</AssemblyName>
+    <Description>Editor mod for hot reloading puzzles</Description>
+    <Version>1.0.2</Version>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <LangVersion>latest</LangVersion>
+    <!-- Where the game's generated BepInEx\interop folder is. The Steam default is tried first; if it
+         isn't there, the newest r2modman / Thunderstore app profile is used (see ResolveBigWalkInterop
+         below). Set it yourself with -p:BigWalkInterop=... if neither fits. -->
+    <BigWalkInterop Condition="'$(BigWalkInterop)' == ''">C:\Program Files (x86)\Steam\steamapps\common\Big Walk\BepInEx\interop</BigWalkInterop>
+  </PropertyGroup>
+
+  <ItemGroup>
+	<PackageReference Include="BepInEx.Unity.IL2CPP" Version="6.0.0-be.788" IncludeAssets="compile" />
+    <PackageReference Include="BepInEx.PluginInfoProps" Version="1.*" />
+  </ItemGroup>
+
+  <ItemGroup Condition="Exists('$(BigWalkInterop)\Assembly-CSharp.dll')">
+    <Reference Include="$(BigWalkInterop)\*.dll">
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <!-- Not at the Steam default: look in the mod managers' profiles, newest first -->
+  <UsingTask TaskName="FindBigWalkInterop" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+    <ParameterGroup>
+      <Folder ParameterType="System.String" Output="true" />
+    </ParameterGroup>
+    <Task>
+      <Using Namespace="System" />
+      <Using Namespace="System.IO" />
+      <Using Namespace="System.Linq" />
+      <Code Type="Fragment" Language="cs"><![CDATA[
+        string appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+        string[] roots = new string[] {
+            Path.Combine(appData, "r2modmanPlus-local", "BigWalk", "profiles"),
+            Path.Combine(appData, "Thunderstore Mod Manager", "DataFolder", "BigWalk", "profiles"),
+        };
+        var profiles = new System.Collections.Generic.List<DirectoryInfo>();
+        foreach (string root in roots) {
+            if (!Directory.Exists(root)) continue;
+            foreach (string profile in Directory.GetDirectories(root))
+                if (File.Exists(Path.Combine(profile, "BepInEx", "interop", "Assembly-CSharp.dll")))
+                    profiles.Add(new DirectoryInfo(profile));
+        }
+        Folder = profiles.Count == 0 ? "" : Path.Combine(profiles.OrderByDescending(d => d.LastWriteTimeUtc).First().FullName, "BepInEx", "interop");
+      ]]></Code>
+    </Task>
+  </UsingTask>
+
+  <Target Name="ResolveBigWalkInterop" BeforeTargets="BeforeResolveReferences" Condition="!Exists('$(BigWalkInterop)\Assembly-CSharp.dll')">
+    <FindBigWalkInterop>
+      <Output TaskParameter="Folder" PropertyName="FoundBigWalkInterop" />
+    </FindBigWalkInterop>
+    <Error Condition="'$(FoundBigWalkInterop)' == ''" Text="Could not find Big Walk's BepInEx\interop folder (looked at the Steam default and in the r2modman and Thunderstore app profiles). Run the game once with BepInEx so it makes that folder, then set BigWalkInterop in BigPuzzleSDK.csproj (or build with -p:BigWalkInterop=&quot;path\to\BepInEx\interop&quot;)." />
+    <Message Importance="high" Text="Big Walk interop not at the Steam default; using the newest mod manager profile: $(FoundBigWalkInterop)" />
+    <ItemGroup>
+      <Reference Include="$(FoundBigWalkInterop)\*.dll">
+        <Private>false</Private>
+      </Reference>
+    </ItemGroup>
+  </Target>
+	<ItemGroup>
+		<EmbeddedResource Include="DefaultTower.puzzlepack" LogicalName="BigPuzzleSDK.DefaultTower.puzzlepack" />
+	</ItemGroup>
+
+</Project>

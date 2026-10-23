@@ -1,0 +1,8 @@
+[*.cs]
+# Keep opening braces on the same line for all expressions (methods, types, control blocks, etc.)
+csharp_new_line_before_open_brace = none
+
+# Optional: Keep inline keywords on the same line rather than forcing a new line
+csharp_new_line_before_else = false
+csharp_new_line_before_catch = false
+csharp_new_line_before_finally = false
