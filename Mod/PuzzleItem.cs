@@ -96,7 +96,6 @@ public class PuzzleItem : PuzzleVanillaCopy, ISavedHeld {
         bell.localRotation = pivotRotInverse;
         bell.localPosition = pivotRotInverse * (-pivotPos);
         bell.localScale = Vector3.one;
-        log.LogInfo($"[PuzzleItem] '{name}': pivot {(pivot != null ? "at " + pivotPos.ToString("0.###") + ", turned " + pivotRotInverse.eulerAngles.ToString("0") + " (model)" : "not set")}.");
         bool any = false;
         Bounds? box = null;
         if (ownFilter != null && ownFilter.sharedMesh != null && ownRenderer != null) {
@@ -191,12 +190,9 @@ public class PuzzleItem : PuzzleVanillaCopy, ISavedHeld {
     private static void AddHome(List<PropCustomHome> list, PropGroup group, bool wanted) {
         if (!wanted) return;
         foreach (PropCustomHome h in list) if (h.propGroup == group) return;
-        object boxed = new PropCustomHome();
-        var t = typeof(PropCustomHome);
-        t.GetField("propGroup").SetValue(boxed, group);
-        var rot = t.GetField("rotation");
-        if (rot != null && rot.FieldType == typeof(Quaternion)) rot.SetValue(boxed, Quaternion.identity);
-        list.Add((PropCustomHome)boxed);
+        var home = new PropCustomHome();
+        home.propGroup = group;
+        list.Add(home);
     }
 
     private static void SetGroup(Il2CppSystem.Collections.Generic.List<PropGroup> groups, PropGroup group, bool wanted) {

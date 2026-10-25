@@ -1,0 +1,16 @@
+{
+    "name": "BepInEx.Unity.IL2CPP",
+    "rootNamespace": "",
+    "references": [
+        "BepInEx.Core"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}

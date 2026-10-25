@@ -168,24 +168,19 @@ public class PuzzleTelescope : MonoBehaviour {
     private void Update() {
         if (PuzzleSDK.IsHost || Time.time >= reseatUntil || Time.time < nextReseat || poses.Count == 0) return;
         nextReseat = Time.time + 0.5f;
-        const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
         try {
             foreach (UnityEngine.Object obj in Resources.FindObjectsOfTypeAll(Il2CppType.Of<PlayerNetworking>())) {
                 PlayerNetworking player = obj != null ? obj.TryCast<PlayerNetworking>() : null;
                 if (player == null) continue;
-                object told = PuzzleSeat.MemberValue(player, GameRefs.Hooks.PoseReferenceMember, flags);
-                if (told == null) continue;
-                int ticket = PuzzleSeat.TicketIn(told, flags);
+                ShellReferenceWithActionNumber told = player.NetworkposeReference;
+                int ticket = told.shellReference.ticket;
                 PlayerPose mine = null;
                 foreach (PlayerPose p in poses) if (p != null && p.ticket == ticket) { mine = p; break; }
                 if (mine == null || mine.occupant != null) continue;
                 reseatTries.TryGetValue(player.Pointer, out int tries);
                 if (tries >= 4) continue;
                 reseatTries[player.Pointer] = tries + 1;
-                MethodInfo hook = player.GetType().GetMethod(GameRefs.Hooks.OnSetPose, flags);
-                if (hook == null || hook.GetParameters().Length != 2) { reseatUntil = 0f; return; }
-                object none = Activator.CreateInstance(hook.GetParameters()[0].ParameterType);
-                hook.Invoke(player, new[] { none, told });
+                player.OnSetPose(new ShellReferenceWithActionNumber(), told);
                 return;
             }
         } catch (Exception ex) {

@@ -18,12 +18,10 @@ using System.Text.RegularExpressions;
 // every .puzzlepack on its own.
 public partial class PuzzleExporterWindow
 {
-    // ---- TODO: fill these in once the packages exist on Thunderstore -----------------------------
-    // Format: Author-PackageName-Version. Until they are replaced the zip is built normally, but
-    // Thunderstore will refuse to accept it (the tab says so).
+    // What every exported package depends on (Thunderstore format: Author-PackageName-Version).
+    // Keep SdkDependency's version in step with the SDK release the puzzles are made against.
     private const string SdkDependency = "markviews-BigPuzzleSDK-0.1.0";
     private const string BepInExDependency = "BepInEx-BepInExPack_IL2CPP-6.0.788";
-    // ----------------------------------------------------------------------------------------------
 
     private const int IconSize = 256;               // Thunderstore wants exactly 256 x 256
     private const int MaxDescriptionLength = 250;   // Thunderstore's limit for the short description
@@ -100,9 +98,6 @@ public partial class PuzzleExporterWindow
 
         List<string> problems = TsProblems();
         foreach (string problem in problems) EditorGUILayout.HelpBox(problem, MessageType.Warning);
-        if (SdkDependency.Contains("TODO"))
-            EditorGUILayout.HelpBox("The SDK dependency name is still a placeholder (the constants at the top of ThunderstoreExportTab.cs). " +
-                "The zip builds, but Thunderstore will reject it until they are set.", MessageType.Info);
 
         bool wasEnabled = GUI.enabled;
         GUI.enabled = wasEnabled && problems.Count == 0;
@@ -268,7 +263,7 @@ public partial class PuzzleExporterWindow
                 EditorUtility.DisplayProgressBar("Export for Thunderstore", $"Building '{p.gameObject.name}' ({i + 1} of {chosen.Count})", (float)i / chosen.Count);
                 puzzle = p;
                 string fileName = TsUniqueName(TsSafeFileName(p.gameObject.name), usedNames) + ".puzzlepack";
-                if (!BuildPack(Path.Combine(packageDir, fileName), false))
+                if (!BuildPack(Path.Combine(packageDir, fileName), packageDir))
                     throw new Exception($"Could not build '{p.gameObject.name}'. The Console has the reason.");
                 puzzleNames.Add(p.gameObject.name);
             }

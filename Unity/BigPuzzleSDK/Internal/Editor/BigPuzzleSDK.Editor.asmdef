@@ -3,7 +3,8 @@
     "rootNamespace": "",
     "references": [
         "BigPuzzleSDK",
-        "Unity.TextMeshPro"
+        "Unity.TextMeshPro",
+        "Unity.Cecil"
     ],
     "includePlatforms": [
         "Editor"

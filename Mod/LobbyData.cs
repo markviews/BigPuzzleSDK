@@ -36,9 +36,9 @@ namespace BigPuzzleSDK {
         internal static void Install(Harmony harmony) {
             Type manager = null, extensions = null;
             try {
-                manager = FindType(GameRefs.Lobby.ManagerType);
-                extensions = FindType(GameRefs.Lobby.DetailsExtensionsType);
-                if (manager == null) throw new MissingMemberException("type " + GameRefs.Lobby.ManagerType + " not found");
+                // Both are public types in the game's Mirror.Transports assembly; typeof makes the runtime load it
+                manager = typeof(EOSPrivateLobbyManager);
+                extensions = typeof(LobbyDetailsExtensions);
                 updateAttribute = AccessTools.Method(manager, GameRefs.Lobby.UpdateAttribute);
                 if (extensions != null) tryGetString = AccessTools.Method(extensions, GameRefs.Lobby.TryGetStringAttribute);
             } catch (Exception ex) {
@@ -71,15 +71,6 @@ namespace BigPuzzleSDK {
             Plugin.log.LogInfo($"[LobbyData] hooks: writing the list {(host ? "ready" : "NOT available")}, reading it {(read ? "ready" : "NOT available")}.");
         }
 
-        // The game's interop types are in assemblies that may not be loaded yet
-        private static Type FindType(string name) {
-            Type type = AccessTools.TypeByName(name);
-            if (type != null) return type;
-            foreach (string assembly in new[] { "Mirror.Transports", "Shipmates.Scripts", "com.Epic.OnlineServices" }) {
-                try { Assembly.Load(assembly); } catch (Exception) { }
-            }
-            return AccessTools.TypeByName(name);
-        }
 
         // ---- What this PC has ----
         private class Entry {
@@ -176,10 +167,7 @@ namespace BigPuzzleSDK {
 
         // The address of an interop object (0 if it can't be read), to tell one lobby change from another
         private static long PointerOf(object wrapper) {
-            try {
-                PropertyInfo pointer = wrapper.GetType().GetProperty("Pointer");
-                return pointer != null ? ((IntPtr)pointer.GetValue(wrapper)).ToInt64() : 0;
-            } catch (Exception) { return 0; }
+            return wrapper is Il2CppInterop.Runtime.InteropTypes.Il2CppObjectBase obj ? obj.Pointer.ToInt64() : 0;
         }
 
         private static void Set(object manager, object modification, string key, string value) {

@@ -39,7 +39,7 @@ public class PuzzleSeat : MonoBehaviour {
     private float reseatUntil;
     private float nextReseat;
     private readonly Dictionary<IntPtr, int> reseatTries = new Dictionary<IntPtr, int>();
-    private static bool reportedShape, reportedCut;
+    private static bool reportedCut;
 
     // Read-only for scripts
     public bool IsOccupied => occupied;
@@ -142,9 +142,9 @@ public class PuzzleSeat : MonoBehaviour {
         // Which seat animation, and the camera / body offsets that go with it
         int look = (int)pose;
         if (look < 0 || look >= Looks.Length) look = 0;
-        Set(seat, "animatorPoseId", Looks[look].id);
-        Set(seat, "cameraOffset", Looks[look].camera);
-        Set(seat, "localBumOffset", Looks[look].bum);
+        seat.animatorPoseId = Looks[look].id;
+        seat.cameraOffset = Looks[look].camera;
+        seat.localBumOffset = Looks[look].bum;
 
         // Its own network id, so sitting here never acts on the game's chair
         ticketId = Tickets.Allocate(1)[0];
@@ -175,18 +175,6 @@ public class PuzzleSeat : MonoBehaviour {
         }
     }
 
-    private static void Set(object target, string member, object value) {
-        try {
-            const BindingFlags f = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
-            PropertyInfo p = target.GetType().GetProperty(member, f);
-            if (p == null) { Plugin.log.LogWarning($"[PuzzleSeat] pose has no '{member}'"); return; }
-            object v = value is Vector3 ? value : Convert.ChangeType(value, p.PropertyType);
-            p.SetValue(target, v);
-        } catch (Exception ex) {
-            Plugin.log.LogWarning($"[PuzzleSeat] could not set {member}: {ex.GetType().Name}: {ex.Message}");
-        }
-    }
-
     private void Start() {
         if (seat == null) return;
         var office = LobbyNetworking.TicketOffice.instance;
@@ -203,27 +191,19 @@ public class PuzzleSeat : MonoBehaviour {
     // Seats anyone who sat here before this PC had the seat (see reseatUntil). Reuses the game's own
     // "this player's pose changed" handler, with the pose it was told about.
     private void ReseatSittingPlayers() {
-        const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
         try {
             if (seat.occupant != null) return;
             foreach (UnityEngine.Object obj in Resources.FindObjectsOfTypeAll(Il2CppType.Of<PlayerNetworking>())) {
                 PlayerNetworking player = obj != null ? obj.TryCast<PlayerNetworking>() : null;
                 if (player == null) continue;
-                object told = MemberValue(player, GameRefs.Hooks.PoseReferenceMember, flags);
-                if (told == null || TicketIn(told, flags) != ticketId) continue;
+                ShellReferenceWithActionNumber told = player.NetworkposeReference;
+                if (told.shellReference.ticket != ticketId) continue;
 
                 reseatTries.TryGetValue(player.Pointer, out int tries);
                 if (tries >= 4) continue;
                 reseatTries[player.Pointer] = tries + 1;
 
-                MethodInfo hook = player.GetType().GetMethod(GameRefs.Hooks.OnSetPose, flags);
-                if (hook == null || hook.GetParameters().Length != 2) {
-                    Plugin.log.LogWarning("[PuzzleSeat] late join: the game's OnSetPose handler wasn't found.");
-                    reseatUntil = 0f;
-                    return;
-                }
-                object none = Activator.CreateInstance(hook.GetParameters()[0].ParameterType);
-                hook.Invoke(player, new[] { none, told });
+                player.OnSetPose(new ShellReferenceWithActionNumber(), told);
                 return;
             }
         } catch (Exception ex) {
@@ -231,35 +211,6 @@ public class PuzzleSeat : MonoBehaviour {
             Plugin.log.LogWarning($"[PuzzleSeat] late join re-seat failed: {inner.GetType().Name}: {inner.Message}");
             reseatUntil = 0f;
         }
-    }
-
-    // The ticket of the seat a pose reference points at (the game wraps a ShellReference with an action number)
-    internal static int TicketIn(object poseReference, BindingFlags flags) {
-        Type t = poseReference.GetType();
-        foreach (FieldInfo f in t.GetFields(flags)) {
-            if (f.IsStatic || f.FieldType != typeof(SeaShell.ShellReference)) continue;
-            return ((SeaShell.ShellReference)f.GetValue(poseReference)).ticket;
-        }
-        foreach (PropertyInfo p in t.GetProperties(flags)) {
-            if (p.PropertyType != typeof(SeaShell.ShellReference) || p.GetIndexParameters().Length != 0) continue;
-            return ((SeaShell.ShellReference)p.GetValue(poseReference)).ticket;
-        }
-        if (!reportedShape) {
-            reportedShape = true;
-            var names = new List<string>();
-            foreach (FieldInfo f in t.GetFields(flags)) if (!f.IsStatic) names.Add(f.FieldType.Name + " " + f.Name);
-            foreach (PropertyInfo p in t.GetProperties(flags)) names.Add(p.PropertyType.Name + " " + p.Name + "()");
-            Plugin.log.LogWarning("[PuzzleSeat] late join: no ShellReference found in " + t.Name + ": " + string.Join(", ", names));
-        }
-        return -1;
-    }
-
-    internal static object MemberValue(object target, string member, BindingFlags flags) {
-        Type t = target.GetType();
-        PropertyInfo p = t.GetProperty(member, flags);
-        if (p != null && p.GetIndexParameters().Length == 0) return p.GetValue(target);
-        FieldInfo f = t.GetField(member, flags);
-        return f != null ? f.GetValue(target) : null;
     }
 
     private void Update() {

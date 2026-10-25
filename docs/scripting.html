@@ -15,34 +15,47 @@
   </div>
 </header>
 <div class="page has-side">
-<nav class="side" aria-label="On this page"><ul><li class="grp"><a href="#a-first-script">A first script</a></li><li class="grp"><a href="#the-puzzlesdk-class">The PuzzleSDK class</a></li><li class="grp"><a href="#synced-variables">Synced variables</a><ul><li><a href="#syncedint">SyncedInt</a></li><li><a href="#syncedbool">SyncedBool</a></li><li><a href="#syncedevent">SyncedEvent</a></li></ul></li></ul></nav>
+<nav class="side" aria-label="On this page"><ul><li class="grp"><a href="#where-scripts-go">Where your scripts go</a></li><li class="grp"><a href="#a-first-script">A first script</a></li><li class="grp"><a href="#the-puzzlesdk-class">The PuzzleSDK class</a></li><li class="grp"><a href="#synced-variables">Synced variables</a><ul><li><a href="#syncedint">SyncedInt</a></li><li><a href="#syncedbool">SyncedBool</a></li><li><a href="#syncedevent">SyncedEvent</a></li></ul></li></ul></nav>
 <main>
 <h1 id="scripting">Scripting</h1>
 <p>You can create pretty complex puzzles with the built in SDK functions, but if you need more complex logic you can write your own C# scripts.</p>
+<h2 id="where-scripts-go">Where your scripts go</h2>
+<p>Your scripts must be in the <code>Assets/PuzzleScripts</code> folder. The SDK creates it for you when you import it (or click <strong>Tools &gt; Big Puzzle SDK &gt; Setup &gt; Set up scripts folder</strong>).</p>
+<ul>
+<li>The folder has an assembly definition, so everything inside this folder is compiled into your mod DLL. A script anywhere else in the project is not part of that DLL and <strong>will not run in game</strong></li>
+<li>The DLL's name comes from the assembly definition inside the folder. You can rename it, just make sure it doesn't clash with another puzzle's DLL name.</li>
+<li>Changes to scripts need a game restart to show up. Ctrl+F2 reloads scenes and assets, not code.</li>
+</ul>
 <h2 id="a-first-script">A first script</h2>
-<pre><code class="language-csharp">using BigPuzzleSDK;
+<pre><code class="language-csharp">using System.Collections.Generic;
+using BigPuzzleSDK;
 using UnityEngine;
 
-public class ThreeTries : MonoBehaviour {
-    [SerializeField] private PuzzleProgressBar bar;
-    [SerializeField] private PuzzleBox prize;
+public class AllBoardsCorrect : MonoBehaviour {
+    [SerializeField] private List&lt;PuzzlePegBoard&gt; boards;
 
-    // Wire a Poke Button's On Pressed to this.
-    public void Pressed() {
+    // Wire each Peg Board's On Correct to this.
+    public void BoardCorrect() {
 
         // Only run this logic if you are host.
-        if(!PuzzleSDK.IsHost) return;
+        if (!PuzzleSDK.IsHost) return;
 
-        bar.Increment();
-        if (bar.IsFull) prize.Open();
+        foreach (PuzzlePegBoard board in boards) {
+            if (!board.IsCorrect) return;
+        }
+        OnSuccess();
+    }
+
+    private void OnSuccess() {
+        // Do something here, like opening a door or calling PuzzleSDK.Win().
     }
 }
 </code></pre>
 <ul>
-<li>Put the script on an object in your puzzle and fill in the fields in the Inspector, like any Unity script.</li>
-<li><code>Pressed()</code> would run for everyone because UnityEvents from the button run for everyone.</li>
-<li>You only need to call SDK functions from host, it syncs them for you. <code>if(!PuzzleSDK.IsHost) return;</code> isn't strictly nessisary here. Clients don't throw an error if they try to do most host only commands they just ignore them.</li>
-<li>Your own objects aren't synced. To change them for everyone, do it from an SDK event.</li>
+<li>Save it as <code>AllBoardsCorrect.cs</code> in <code>Assets/PuzzleScripts</code> (the file name must match the class name). Put the script on an object in your puzzle and drag your Peg Boards into the <strong>Boards</strong> list in the Inspector, like any Unity script.</li>
+<li>On each Peg Board, click <strong>+</strong> under <strong>On Correct</strong>, drag in the object that has the script, and pick <code>AllBoardsCorrect &gt; BoardCorrect</code>.</li>
+<li>Every time a board changes to correct, <code>BoardCorrect()</code> runs and checks all the boards. Only when all of them are correct does it reach <code>OnSuccess()</code>.</li>
+<li><code>BoardCorrect()</code> runs for everyone because UnityEvents from the board run for everyone. That's why we return if <code>!PuzzleSDK.IsHost</code></li>
 </ul>
 <h2 id="the-puzzlesdk-class">The <code>PuzzleSDK</code> class</h2>
 <div class="table-wrap"><table>

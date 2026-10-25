@@ -152,7 +152,6 @@ public class PuzzleLight : MonoBehaviour {
             if (l == null) continue;
             if (lamp == null) lamp = l;
             lights.Add(l);
-            log.LogInfo($"[PuzzleLight] '{name}' ({type}): the lamp's own light is {l.type}, range {l.range:0.##}, intensity {l.intensity:0.##}, spot angle {l.spotAngle:0.#}, shadows {l.shadows}.");
             baseLightColor.Add(l.color);
             ApplyLightSettingsTo(l, false);
             baseIntensity.Add(intensity > 0f ? intensity : l.intensity);
@@ -301,9 +300,7 @@ public class PuzzleLight : MonoBehaviour {
             nudgeBack = 0f;
             if (on && lampState != null) lampState.SetState(OnValue);
         }
-        if (primed && !diagDone && Time.time >= diagAt) { diagDone = true; Diagnose(); }
         if (primed) return;
-        diagAt = Time.time + 4f;
         primed = true;
         Apply(on, true);
     }
@@ -585,51 +582,6 @@ public class PuzzleLight : MonoBehaviour {
 
     private float nudgeAt;      // 0 = nothing to do; otherwise when to flick the lamp off
     private float nudgeBack;    // when to flick it back on
-    private bool diagDone;
-    private float diagAt;
-
-    // One line per lamp a few seconds after it starts: why does (or doesn't) its glow show?
-    private void Diagnose() {
-        try {
-            int stateValue = -1;
-            if (lampState != null) PeckValue.TryRead(lampState, out stateValue);
-            var sb = new System.Text.StringBuilder();
-            sb.Append($"[PuzzleLight][diag] '{name}': on={on} state={stateValue} custom={useCustomColor} color={color} party={party} glowParts={glowRenderers.Count} helpers={glowHelpers.Count}");
-            foreach (PropertyBlockHelper h in glowHelpers) {
-                if (h == null) continue;
-                var cs = h.colorSettings;
-                sb.Append(" | helper '" + h.name + "' colours:");
-                if (cs != null) for (int i = 0; i < cs.Count; i++) sb.Append($" {cs[i].propertyName}={cs[i].color}");
-                var fs = h.floatSettings;
-                if (fs != null) { sb.Append(" floats:"); for (int i = 0; i < fs.Count; i++) sb.Append($" {fs[i].propertyName}={fs[i].floatValue}"); }
-            }
-            for (int i = 0; i < glowRenderers.Count; i++)
-                if (glowRenderers[i] != null) sb.Append($" | lens[{i}]={glowRenderers[i].material.GetColor(LensColorProperty)}");
-            foreach (Light l in lights) if (l != null) sb.Append($" | light enabled={l.enabled} intensity={l.intensity:0.##} color={l.color}");
-            for (int i = 0; i < glowRenderers.Count; i++) {
-                Renderer r = glowRenderers[i];
-                if (r == null) continue;
-                Material m = r.material;
-                sb.Append($" | shader={(m.shader != null ? m.shader.name : "?")}");
-                var block = new MaterialPropertyBlock();
-                r.GetPropertyBlock(block);
-                string[] probe = { "_EmissiveMask0" };
-                foreach (string pn in probe) {
-                    string part = "";
-                    if (m.HasProperty(pn)) {
-                        try { part += " mat=" + m.GetFloat(pn); } catch (Exception) { try { part += " mat=" + m.GetColor(pn); } catch (Exception) { } }
-                    }
-                    if (block.HasProperty(pn)) {
-                        try { part += " block=" + block.GetFloat(pn); } catch (Exception) { try { part += " block=" + block.GetColor(pn); } catch (Exception) { } }
-                    }
-                    if (part.Length > 0) sb.Append($" | {pn}:{part}");
-                }
-            }
-            Plugin.log.LogInfo(sb.ToString());
-        } catch (Exception ex) {
-            Plugin.log.LogWarning($"[PuzzleLight][diag] '{name}': {ex.GetType().Name}: {ex.Message}");
-        }
-    }
 
     private void Apply(bool value, bool quiet) {
         var log = Plugin.log;

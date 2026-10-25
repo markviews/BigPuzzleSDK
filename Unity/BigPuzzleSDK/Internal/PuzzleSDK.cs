@@ -36,6 +36,9 @@ public class PuzzleSDK : MonoBehaviour {
     // True on the host (and in single player). SDK functions only take effect on the host.
     public static bool IsHost => true;
 
+    // Called by the plugin class the exporter adds to your scripts DLL. Not for your own code.
+    public static void RegisterAssemblyOf(object anyObject) { }
+
     // Host only. Fires every PuzzleConfetti and releases every PuzzleGourdVice, then onWin. Does not stop the puzzle: players flip the Start Switch back for that.
     public void Win() { }
 }

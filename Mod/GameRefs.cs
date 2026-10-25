@@ -402,13 +402,6 @@ namespace BigPuzzleSDK {
             };
         }
 
-        // ---- Scan list for the Ctrl+F3 template dump (TemplateDump.cs) ----
-        // Fixed extras the dump looks at that no component needs a path for.
-        internal static class ScanExtras {
-            public const string TelescopeLobbyVision = "name:FixedTelescope_LobbyVision|InsertAndScope/FixedTelescope_LobbyVision";
-            public const string PillowByName = "name:gourdValetPillowModel|GourdValet/gourdValetPillowModel";
-        }
-
         // ---- The game's EOS lobby (LobbyData.cs) ----
         // The lobby the game creates for a world, and the room code a player joins by. The SDK adds its
         // own attributes to it so a joining player can read them before connecting.
@@ -431,9 +424,6 @@ namespace BigPuzzleSDK {
         // (Harmony patches and reflection. If one is renamed, the log says "could not hook <name>".)
         internal static class Hooks {
             public const string OnSetHeld = "OnSetHeld";                       // PlayerNetworking: a player's held item changed
-            public const string OnSetPose = "OnSetPose";                       // PlayerNetworking: a player's seat/pose changed
-            public const string PoseReferenceMember = "NetworkposeReference";  // PlayerNetworking: which pose a player is in
-            public const string SetDirty = "SetDirty";                         // Mirror NetworkBehaviour: send all synced data again
             public const string SetLobbyVisionActive = "SetLobbyVisionActive"; // LobbyVisionToggler
             public const string ApplyVolume = "ApplyVolume";                   // SettingsWardrobe: master volume
             public const string ApplyVolumeSfx = "ApplyVolumeSfx";             // SettingsWardrobe: effects volume

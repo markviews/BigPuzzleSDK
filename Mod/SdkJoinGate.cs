@@ -31,7 +31,7 @@ namespace BigPuzzleSDK {
             bool host = false;
             InstallClient();
             try {
-                Type auth = FindType("Mirror.Authenticators.HouseAuthenticator");
+                Type auth = typeof(Mirror.Authenticators.HouseAuthenticator);
                 MethodInfo receive = auth != null ? AccessTools.Method(auth, "OnInitialAuthRequestMessage") : null;
                 denyEntry = auth != null ? AccessTools.Method(auth, "DenyEntry") : null;
                 if (receive != null && versionProp == null) {
@@ -51,24 +51,15 @@ namespace BigPuzzleSDK {
         }
 
 
-        // Looks in every loaded assembly (loading the game's own if needed), without relying on one scan of all types
-        private static Type FindType(string name) {
-            for (int pass = 0; pass < 2; pass++) {
-                foreach (Assembly asm in AppDomain.CurrentDomain.GetAssemblies()) {
-                    try { Type t = asm.GetType(name, false); if (t != null) return t; } catch (Exception) { }
-                }
-                if (pass == 0) { try { Assembly.Load("Assembly-CSharp"); } catch (Exception) { } }
-            }
-            return null;
-        }
-
         // The client side: the game's writer for the join request (found by its parameters, its name is generated).
         // Tried again each time a lobby is read, until it works.
         internal static void InstallClient() {
             if (clientHooked || harmonyInstance == null) return;
             string why = "";
             try {
-                Type generated = FindType("Mirror.GeneratedNetworkCode");
+                // Several of the game's assemblies have a Mirror.GeneratedNetworkCode; the join request's writer is in Assembly-CSharp,
+                // the same assembly as HouseAuthenticator
+                Type generated = typeof(Mirror.Authenticators.HouseAuthenticator).Assembly.GetType("Mirror.GeneratedNetworkCode", false);
                 MethodInfo writer = null;
                 if (generated == null) why = "Mirror.GeneratedNetworkCode not found";
                 else {
@@ -109,10 +100,7 @@ namespace BigPuzzleSDK {
             try {
                 if (__1 == null || versionProp == null) return true;
                 // The host's own player joins through connection 0: never check that one
-                if (__0 != null) {
-                    PropertyInfo connId = __0.GetType().GetProperty("connectionId");
-                    if (connId != null && connId.GetValue(__0) is int id && id == 0) return true;
-                }
+                if (__0 is Mirror.NetworkConnection connection && connection.connectionId == 0) return true;
                 string version = versionProp.GetValue(__1) as string ?? "";
                 string who = nameProp != null ? (nameProp.GetValue(__1) as string ?? "?") : "?";
                 bool hasSdk = version.EndsWith(Suffix, StringComparison.Ordinal);

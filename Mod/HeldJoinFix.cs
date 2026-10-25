@@ -18,10 +18,8 @@ namespace BigPuzzleSDK {
     //   Host:   once the item has been re-sent to a joining player (see NetItems.Tick), marks the
     //           holders' synced data as changed so the held item is sent again, now that it exists.
     internal static class HeldJoinFix {
-        private static bool reportedSkip, reportedNudge, reportedNoNudge;
+        private static bool reportedSkip, reportedNudge;
         private static int nudges;
-        private static MethodInfo setDirty;
-        private static bool setDirtyLooked;
 
         internal static void InstallHook(Harmony harmony) {
             try {
@@ -134,16 +132,6 @@ namespace BigPuzzleSDK {
             }
         }
 
-        private static string NullMembers(object o) {
-            if (o == null) return "(object is null)";
-            var names = new List<string>();
-            foreach (PropertyInfo pi in o.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)) {
-                if (pi.GetIndexParameters().Length != 0 || !pi.CanRead || pi.PropertyType.IsValueType || pi.PropertyType == typeof(string)) continue;
-                try { if (pi.GetValue(o) == null) names.Add(pi.Name); } catch (Exception) { }
-            }
-            return names.Count == 0 ? "(none)" : string.Join(", ", names);
-        }
-
         // Something is held, but this PC has no such object
         private static bool Unresolved(PlayerHeldInformation held) {
             try {
@@ -176,19 +164,7 @@ namespace BigPuzzleSDK {
         }
 
         private static void MarkChanged(PlayerNetworking player) {
-            if (!setDirtyLooked) {
-                setDirtyLooked = true;
-                const BindingFlags f = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
-                setDirty = typeof(NetworkBehaviour).GetMethod(GameRefs.Hooks.SetDirty, f, null, Type.EmptyTypes, null);
-            }
-            if (setDirty == null) {
-                if (!reportedNoNudge) {
-                    reportedNoNudge = true;
-                    Plugin.log.LogWarning("[HeldJoinFix] NetworkBehaviour.SetDirty wasn't found, so a joining player only sees a held puzzle item after it is next picked up.");
-                }
-                return;
-            }
-            setDirty.Invoke(player, null);
+            player.SetDirty();   // Mirror: send all of this object's synced data again
         }
     }
 

@@ -4,7 +4,6 @@
     <TargetFramework>net6.0</TargetFramework>
     <AssemblyName>BigPuzzleSDK</AssemblyName>
     <Description>Editor mod for hot reloading puzzles</Description>
-    <Version>1.0.2</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
     <!-- Where the game's generated BepInEx\interop folder is. The Steam default is tried first; if it
@@ -15,7 +14,6 @@
 
   <ItemGroup>
 	<PackageReference Include="BepInEx.Unity.IL2CPP" Version="6.0.0-be.788" IncludeAssets="compile" />
-    <PackageReference Include="BepInEx.PluginInfoProps" Version="1.*" />
   </ItemGroup>
 
   <ItemGroup Condition="Exists('$(BigWalkInterop)\Assembly-CSharp.dll')">

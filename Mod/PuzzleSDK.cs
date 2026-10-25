@@ -14,6 +14,11 @@ public enum PuzzleType { Puzzle, Tower, None }
 public class PuzzleSDK : MonoBehaviour {
     public PuzzleSDK(IntPtr ptr) : base(ptr) { }
 
+    // The exporter adds a plugin class to every puzzle code DLL; its Load() calls this with itself,
+    // which registers the DLL it is in.
+    [Il2CppInterop.Runtime.Attributes.HideFromIl2Cpp]
+    public static void RegisterAssemblyOf(object anyObject) { if (anyObject != null) PuzzleLoader.RegisterAssembly(anyObject.GetType().Assembly); }
+
     internal bool won;     // true once Win() has been called
     internal bool running; // true between StartPuzzle() and StopPuzzle()
 

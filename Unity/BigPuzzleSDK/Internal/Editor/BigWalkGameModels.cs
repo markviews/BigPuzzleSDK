@@ -43,7 +43,7 @@ public static class BigWalkGameModels {
 
     // ---- Loading ----
     // On editor start: the cache if it matches the installed game, else read the game again.
-    // With no game and no cache, the Import Models window opens (once per editor session).
+    // With no game and no cache, the Setup window opens (once per editor session).
     private static void LoadOnStartup() {
         string game = Resolve(SavedOrDefaultPath()) ?? AutoDetect();
         if (game != null) {
@@ -55,7 +55,7 @@ public static class BigWalkGameModels {
         Clear();
         if (!SessionState.GetBool(AskedKey, false)) {
             SessionState.SetBool(AskedKey, true);
-            ImportModelsWindow.Open();
+            SetupWindow.Open();
         }
     }
 

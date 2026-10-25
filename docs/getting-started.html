@@ -36,7 +36,11 @@
 <h3 id="setup">Setup Unity project</h3>
 <ol>
 <li>Install <a href="https://thunderstore.io/c/big-walk/p/ebkr/r2modman/">r2modman</a> (click the download button and download / extract the zip)</li>
-<li>Create profile in r2modman and install <a href="https://github.com/markviews/BigPuzzleSDK/releases">BigPuzzleSDK</a>, <a href="https://thunderstore.io/c/big-walk/p/Yukikaco/CinematicUnityExplorer/">UnityExplorer</a>, <a href="https://thunderstore.io/c/big-walk/p/jangles/NoClip/">NoClip</a>, <a href="https://thunderstore.io/c/big-walk/p/BayTurtleKing/Big_Landing/">BigLanding</a>, <a href="https://thunderstore.io/c/big-walk/p/Yorimor/DayNightSettings/">DayNightSettings</a></li>
+<li>Create profile in r2modman and install <a href="https://github.com/markviews/BigPuzzleSDK/releases">BigPuzzleSDK</a>, <a href="https://thunderstore.io/c/big-walk/p/Yukikaco/CinematicUnityExplorer/">UnityExplorer</a>, <a href="https://thunderstore.io/c/big-walk/p/jangles/NoClip/">NoClip</a>
+<ul>
+<li>Also Recomended: <a href="https://thunderstore.io/c/big-walk/p/BayTurtleKing/Big_Landing/">BigLanding</a>, <a href="https://thunderstore.io/c/big-walk/p/Yorimor/DayNightSettings/">DayNightSettings</a>, <a href="https://thunderstore.io/c/big-walk/p/n0__name/BigWalk_SkipIntro/">SkipIntro</a></li>
+</ul>
+</li>
 <li>Create a <a href="https://unity.com/releases/editor/whats-new/6000.3.17f1">6000.3.17f1</a> Unity project with URP</li>
 <li>Download <a href="https://github.com/markviews/BigPuzzleSDK/releases">BigPuzzleSDK.unitypackage</a> and add to project</li>
 </ol>
@@ -63,12 +67,9 @@
 <figure class="shot" data-path="images/first-puzzle-components.png"><img src="images/first-puzzle-components.png" alt="The components placed in the Unity editor" loading="lazy" onerror="this.parentElement.classList.add('empty');this.remove()"><figcaption>Image goes here: <code>docs/images/first-puzzle-components.png</code></figcaption></figure>
 <h3 id="testing">Testing</h3>
 <ol>
-  <li>Click Tools &gt; Export Puzzle. Save to your r2modman plugins folder. Should be <code>%appdata%\r2modmanPlus-local\BigWalk\profiles\[profile name]\BepInEx\plugins</code></li>
-  <li>Start the game once with your puzzle installed so the mod creates its config file, then close it</li>
-  <li>Set <code>DevKeys = true</code> in r2modman config editor <code>BepInEx\config\markviews.BigPuzzleSDK.cfg</code></li>
-<li>Press <code>Control + F1</code> to teleport to your puzzle if you set a teleport Transform in PuzzleSDK</li>
-<li>Press <code>Control + F2</code> to hot reload your puzzle without restarting your game
-* Dev keys are disabled for everyone if someone joins with them disabled. This is to prevent accidentally pressing them while playing normally</li>
+  <li>Click Tools &gt; Export Puzzle. Pick your plugins folder. It should be: <code>%appdata%\r2modmanPlus-local\BigWalk\profiles\[profile name]\BepInEx\plugins\</code></li>
+  <li>Start the game and press <code>Control + F1</code> to teleport to your puzzle if you set a teleport Transform in PuzzleSDK</li>
+  <li>Press <code>Control + F2</code> to hot reload your puzzle without restarting your game. Changes to your scripts need a game restart</li>
 </ol>
 <h3 id="sharing">Sharing</h3>
 <ol>

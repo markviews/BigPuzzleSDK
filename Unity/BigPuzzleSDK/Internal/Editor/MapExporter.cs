@@ -9,7 +9,6 @@ using System.Reflection;
 // Exports the selected object as a .puzzlepack: a ZIP containing
 //   puzzle.bundle  - an AssetBundle with the object as a prefab (all built-in components and assets)
 //   puzzle.json    - the custom scripts that were on it, with their serialized fields and events
-//   scripts/*.dll  - the compiled assemblies of any creator-written scripts
 // Custom scripts are stripped from the bundle because their classes do not exist in the game;
 // the mod re-creates them from puzzle.json.
 public partial class PuzzleExporterWindow : EditorWindow
@@ -179,13 +178,13 @@ public partial class PuzzleExporterWindow : EditorWindow
         if (autoNow != autoOn) AutoExportOnSave = autoNow;
 
         // Where the last export went; the button above reuses it without asking
-        string folder = EditorPrefs.GetString(ExportFolderKey, "");
+        string folder = ExportFolder();
         EditorGUILayout.Space();
         EditorGUILayout.LabelField("Export folder", string.IsNullOrEmpty(folder) ? "(asked on first export)" : folder, EditorStyles.wordWrappedMiniLabel);
         if (GUILayout.Button("Change export folder..."))
         {
             string picked = EditorUtility.OpenFolderPanel("Puzzle export folder", folder, "");
-            if (!string.IsNullOrEmpty(picked)) EditorPrefs.SetString(ExportFolderKey, picked);
+            if (!string.IsNullOrEmpty(picked)) EditorPrefs.SetString(ExportFolderKey, DevFolderFor(picked));
         }
     }
 
@@ -235,6 +234,28 @@ public partial class PuzzleExporterWindow : EditorWindow
 
     private const string ExportFolderKey = "BigPuzzleSDK.ExportFolder";
 
+    // The remembered export folder. If it is a BepInEx plugins folder, puzzles go in its BigPuzzleSDK
+    // subfolder instead: that is where the mod treats puzzles as ones being tested (creator keys work).
+    private static string ExportFolder()
+    {
+        string folder = EditorPrefs.GetString(ExportFolderKey, "");
+        return string.IsNullOrEmpty(folder) || !Directory.Exists(folder) ? folder : DevFolderFor(folder);
+    }
+
+    private static string DevFolderFor(string picked)
+    {
+        string trimmed = picked.TrimEnd('/', '\\');
+        DirectoryInfo dir = new DirectoryInfo(trimmed);
+        if (dir.Name.Equals("plugins", System.StringComparison.OrdinalIgnoreCase) && dir.Parent != null
+            && dir.Parent.Name.Equals("BepInEx", System.StringComparison.OrdinalIgnoreCase))
+        {
+            string dev = Path.Combine(trimmed, "BigPuzzleSDK");
+            Directory.CreateDirectory(dev);
+            return dev;
+        }
+        return picked;
+    }
+
     // ---- Export on save ----
     private static string AutoExportPref { get { return "BigPuzzleSDK.AutoExportOnSave." + Hash128.Compute(Application.dataPath); } }
     internal static bool AutoExportOnSave
@@ -254,7 +275,7 @@ public partial class PuzzleExporterWindow : EditorWindow
     private static void AutoExport(UnityEngine.SceneManagement.Scene scene)
     {
         if (autoExporting || !scene.IsValid()) return;
-        string folder = EditorPrefs.GetString(ExportFolderKey, "");
+        string folder = ExportFolder();
         if (string.IsNullOrEmpty(folder) || !Directory.Exists(folder))
         {
             Debug.LogWarning("[PuzzleExporter] Export on save is on, but there's no export folder yet. Use the Export button once to choose one.");
@@ -287,11 +308,12 @@ public partial class PuzzleExporterWindow : EditorWindow
     {
         // Export straight into the remembered folder, replacing the old packs without asking.
         // The folder is only asked for the first time (or if it no longer exists).
-        string folder = EditorPrefs.GetString(ExportFolderKey, "");
+        string folder = ExportFolder();
         if (string.IsNullOrEmpty(folder) || !Directory.Exists(folder))
         {
             folder = EditorUtility.OpenFolderPanel("Puzzle export folder", "", "");
             if (string.IsNullOrEmpty(folder)) { status = ""; return; }
+            folder = DevFolderFor(folder);
             EditorPrefs.SetString(ExportFolderKey, folder);
         }
 
@@ -309,7 +331,7 @@ public partial class PuzzleExporterWindow : EditorWindow
                 puzzle = p;
                 string fileName = TsUniqueName(p.gameObject.name, usedNames) + ".puzzlepack";
                 string path = Path.Combine(folder, fileName);
-                if (BuildPack(path, true))
+                if (BuildPack(path, Path.GetDirectoryName(path)))
                 {
                     done++;
                     Debug.Log($"[PuzzleExporter] Exported to {path}");
@@ -335,9 +357,9 @@ public partial class PuzzleExporterWindow : EditorWindow
     }
 
     // Builds the .puzzlepack of the selected puzzle at 'path' (an old file there is replaced).
-    // True = it was written. The Thunderstore tab uses this too, with copyLooseDlls false: the
-    // creator DLLs are inside the pack, and the loose copies are only there for hot reload.
-    private bool BuildPack(string path, bool copyLooseDlls)
+    // True = it was written. If the puzzle uses the creator's own scripts, their plugin DLL (the scripts
+    // DLL with the SDK's plugin class added) is written to 'pluginDir', beside the pack.
+    private bool BuildPack(string path, string pluginDir)
     {
         string stagingDir = Path.Combine(Application.temporaryCachePath, "PuzzleExportTemp");
         string buildDir = Path.Combine(stagingDir, "build"); // raw AssetBundle build output
@@ -364,17 +386,6 @@ public partial class PuzzleExporterWindow : EditorWindow
             };
             CollectScripts(exportRoot, "/", pack.scripts);
             File.WriteAllText(Path.Combine(packDir, "puzzle.json"), JsonUtility.ToJson(pack, true));
-
-            // 2. Ship the compiled DLL of every creator assembly that was used
-            if (creatorAssemblies.Count > 0)
-            {
-                string scriptsDir = Path.Combine(packDir, "scripts");
-                Directory.CreateDirectory(scriptsDir);
-                foreach (KeyValuePair<string, string> entry in creatorAssemblies)
-                {
-                    File.Copy(entry.Value, Path.Combine(scriptsDir, entry.Key + ".dll"), true);
-                }
-            }
 
             // 3. Make a copy without the custom scripts and save it as a temporary prefab.
             //    The editor previews of the game's models are never part of the puzzle, but they
@@ -426,20 +437,19 @@ public partial class PuzzleExporterWindow : EditorWindow
             if (File.Exists(path)) File.Delete(path);
             ZipFile.CreateFromDirectory(packDir, path);
 
-            // 6. Also put a loose copy of each creator DLL next to the .puzzlepack
-            string exportDir = Path.GetDirectoryName(path);
-            foreach (KeyValuePair<string, string> entry in copyLooseDlls ? creatorAssemblies : new Dictionary<string, string>())
+            // 6. The creator's code, as a plugin DLL next to the .puzzlepack
+            foreach (KeyValuePair<string, string> entry in creatorAssemblies)
             {
-                string target = Path.Combine(exportDir, entry.Key + ".dll");
+                string target = Path.Combine(pluginDir, entry.Key + ".dll");
                 try
                 {
-                    File.Copy(entry.Value, target, true);
-                    Debug.Log($"[PuzzleExporter] Copied {entry.Key}.dll to {exportDir}");
+                    BigPuzzleSDK.GameAssets.PluginInjector.Inject(entry.Value, target);
+                    Debug.Log($"[PuzzleExporter] Wrote {entry.Key}.dll to {pluginDir}");
                 }
                 catch (System.Exception copyError)
                 {
-                    // Usually the game has the old copy open; the pack itself is still complete
-                    Debug.LogWarning($"[PuzzleExporter] Could not copy {entry.Key}.dll to {exportDir}: {copyError.Message}");
+                    // Usually the game has the old copy open (Windows locks a loaded DLL)
+                    Debug.LogWarning($"[PuzzleExporter] Could not write {entry.Key}.dll to {pluginDir}: {copyError.Message}");
                 }
             }
             success = true;
@@ -506,12 +516,16 @@ public partial class PuzzleExporterWindow : EditorWindow
                 fields = new List<PuzzleFieldData>()
             };
 
-            // Creator code (anything outside the SDK assembly): remember its DLL so it ships in the pack
+            // Creator code (anything outside the SDK assembly): remember its DLL so it ships as a plugin
             if (type.Assembly != SdkAssembly)
             {
                 string assemblyName = type.Assembly.GetName().Name;
                 string location = type.Assembly.Location;
-                if (!string.IsNullOrEmpty(location) && File.Exists(location))
+                if (assemblyName == "Assembly-CSharp")
+                {
+                    Debug.LogWarning($"[PuzzleExporter] {type.Name} is not in your puzzle scripts folder ({BigPuzzleSDK.GameAssets.ScriptsFolderSetup.FolderPath}), so it will not run in game. Move it there.", tr);
+                }
+                else if (!string.IsNullOrEmpty(location) && File.Exists(location))
                 {
                     script.assembly = assemblyName;
                     creatorAssemblies[assemblyName] = location;

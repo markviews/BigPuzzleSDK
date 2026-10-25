@@ -58,7 +58,7 @@ namespace BigPuzzleSDK {
 
         // The plinths in use, in fill order (a save fills them from the first)
         internal List<PuzzleGourdPlinth> Slots {
-            get {
+            [Il2CppInterop.Runtime.Attributes.HideFromIl2Cpp] get {
                 if (!trimmed) { trimmed = true; TrimToPuzzleCount(); }
                 return plinths.FindAll(Usable);
             }
@@ -77,7 +77,6 @@ namespace BigPuzzleSDK {
 
             if (puzzles > plinths.Count)
                 Plugin.log.LogWarning($"[TowerButton] '{name}': {puzzles} modded puzzles are loaded but the tower has only {plinths.Count} plinths; the extra gourds have nowhere to go.");
-            Plugin.log.LogInfo($"[TowerButton] '{transform.root.name}': {Math.Min(puzzles, plinths.Count)} of {plinths.Count} plinths in use ({puzzles} modded puzzle(s) loaded)");
         }
     }
 

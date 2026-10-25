@@ -27,20 +27,20 @@ using static PropertyBlockHelper;
 namespace BigPuzzleSDK {
     [BepInPlugin("markviews.BigPuzzleSDK", "Big Puzzle SDK", Version)]
     public class Plugin : BasePlugin {
-        internal const string Version = "1.0.0";
+        internal const string Version = "0.1.2";
 
         internal static ManualLogSource log;
 
-        // Creator tools (Ctrl+F1 teleport, Ctrl+F2 reload). Off for players; creators turn it on
-        // in BepInEx/config/markviews.BigPuzzleSDK.cfg (or a mod manager's config editor).
-        internal static ConfigEntry<bool> devKeys;
+        // Puzzle creators put the puzzles they are testing in BepInEx/plugins/BigPuzzleSDK. Packs there are
+        // "dev puzzles": the creator keys (Ctrl+F1 teleport, Ctrl+F2 reload) work on them and only on them.
+        // A puzzle installed by a mod manager is never in this folder, so players never get the keys.
+        internal static string DevFolder { get { return Path.Combine(Paths.PluginPath, "BigPuzzleSDK"); } }
         private static readonly HashSet<Type> registered = new HashSet<Type>();
 
         public override void Load() {
             log = base.Log;
-            devKeys = Config.Bind("Creator", "DevKeys", false,
-                "Turns on the puzzle creator keys: Ctrl+F1 teleports to a puzzle's debugTeleport, Ctrl+F2 reloads every puzzle (host only, for everyone). Leave off when just playing.");
-            if (devKeys.Value) log.LogInfo("[Puzzle] Creator keys on: Ctrl+F1 teleport, Ctrl+F2 reload.");
+            try { Directory.CreateDirectory(DevFolder); }   // so a creator can just pick it as their export folder
+            catch (Exception ex) { log.LogWarning($"[Puzzle] Could not create {DevFolder}: {ex.Message}"); }
             var harmony = new Harmony("markviews.BigPuzzleSDK");
             harmony.PatchAll();
             SyncedValue.InstallHook(harmony);
@@ -200,14 +200,10 @@ namespace BigPuzzleSDK {
             // Over the password screen: what doesn't match the host's lobby
             JoinPopup.Tick();
 
-            // Creator keys (see Plugin): only with DevKeys on, and only with Ctrl held, so they
-            // can't be hit by accident while playing
+            // Creator keys (see Plugin.DevFolder): only when a dev puzzle is installed, and only with Ctrl held,
+            // so they can't be hit by accident while playing
             bool ctrl = UnityEngine.Input.GetKey(KeyCode.LeftControl) || UnityEngine.Input.GetKey(KeyCode.RightControl);
-            bool local = Plugin.devKeys != null && Plugin.devKeys.Value && ctrl;
-            // Ctrl+F1 / Ctrl+F2 also need every player in the session to have DevKeys on
-            bool dev = local && SdkHandshake.DevKeysAllowed;
-            if (local && !dev && (UnityEngine.Input.GetKeyDown(KeyCode.F1) || UnityEngine.Input.GetKeyDown(KeyCode.F2)))
-                Plugin.log.LogInfo("[Puzzle] Creator keys are off in this session: every player needs DevKeys turned on.");
+            bool dev = ctrl && PuzzleLibrary.HasDevPuzzles;
 
             // Ctrl+F2: reload the puzzles, for every player. Only the host can do this.
             if (dev && UnityEngine.Input.GetKeyDown(KeyCode.F2)) {
@@ -232,8 +228,6 @@ namespace BigPuzzleSDK {
             // Ctrl+F1: teleport the local player to a puzzle's debugTeleport
             if (dev && UnityEngine.Input.GetKeyDown(KeyCode.F1)) TeleportToPuzzle();
 
-            // Creator tool: Ctrl+F3 writes the template / scan dump (see TemplateDump.cs). Switched off for release.
-            // if (local && UnityEngine.Input.GetKeyDown(KeyCode.F3)) TemplateDump.Run();
         }
 
         // Other players: the host's list of puzzles arrived. Build the ones this PC has in the same
@@ -289,10 +283,10 @@ namespace BigPuzzleSDK {
                 GameObject puzzle = activePuzzles[teleportIndex % activePuzzles.Count];
                 teleportIndex = (teleportIndex + 1) % activePuzzles.Count;
                 PuzzleSDK sdk = puzzle.GetComponentInChildren<PuzzleSDK>();
-                if (sdk != null && sdk.debugTeleport != null) main = sdk;
+                if (sdk != null && sdk.debugTeleport != null && PuzzleLibrary.IsDevPuzzle(sdk.packId)) main = sdk;
             }
             if (main == null) {
-                Plugin.log.LogWarning("[Puzzle] Ctrl+F1: no loaded puzzle has a debugTeleport set on its PuzzleSDK.");
+                Plugin.log.LogWarning("[Puzzle] Ctrl+F1: no puzzle in the BigPuzzleSDK folder has a debugTeleport set on its PuzzleSDK.");
                 return;
             }
             Plugin.log.LogInfo($"[Puzzle] Ctrl+F1: teleporting to '{main.transform.root.name}'");
@@ -1374,22 +1368,18 @@ namespace BigPuzzleSDK {
         private const float AnswerDelay = 0.5f;    // players: let the value settle before answering
 
         private static SyncedValue beacon;
-        private static SyncedValue devChannel;   // host -> everyone: 1 = creator keys allowed this session
         private static int loads;
 
         // Called by the loader right after the reload channel, before every puzzle
         internal static void Prepare() {
-            // Two ids of the SDK's own, taken on every load in the same order (made the first time)
+            // Its own id, taken on every load in the same order (made the first time)
             Transform parent = BigPuzzleEditor.instance != null ? BigPuzzleEditor.instance.transform : null;
             if (beacon == null && parent != null) beacon = new SyncedValue(parent, "sdk beacon", oneShot: false, persistent: true);
             else Tickets.Allocate(1);   // keep its id out of the puzzles'
-            if (devChannel == null && parent != null) devChannel = new SyncedValue(parent, "dev keys", oneShot: false, persistent: true);
-            else Tickets.Allocate(1);
             if (beacon == null) return;
             // Each lobby has its own id registry, so register again on every load (a player who
             // joins a second lobby would otherwise never hear the beacon)
             beacon.Register();
-            if (devChannel != null) devChannel.Register();
 
             // Host: a new value every load, so players answer again with their current puzzles
             loads = loads % 100 + 1;
@@ -1402,7 +1392,7 @@ namespace BigPuzzleSDK {
             else ClientTick();
         }
 
-        // What this PC has: "BWSDK1|1.0.0|<id>:<fingerprint>:<first id>:<name>;...|dev=0"
+        // What this PC has: "BWSDK1|1.0.0|<id>:<fingerprint>:<first id>:<name>;..."
         // (one entry per puzzle; <first id> is where the host's copy starts its network ids,
         // -1 if the host didn't build it, and means nothing in a player's answer)
         private static string Describe() {
@@ -1415,36 +1405,7 @@ namespace BigPuzzleSDK {
             PuzzlePack builtIn = PuzzleLibrary.builtInTower;
             if (!NetworkServer.active && builtIn != null && !PuzzleLibrary.packs.Contains(builtIn))
                 parts.Add(Clean(builtIn.id) + ":" + builtIn.hash + ":-1:" + Clean(builtIn.name));
-            return Protocol + "|" + Plugin.Version + "|" + string.Join(";", parts) + "|dev=" + (LocalDevKeys ? "1" : "0");
-        }
-
-        // ---- Creator keys (Ctrl+F1 / Ctrl+F2) ----
-        // Only allowed when every player in the session has DevKeys turned on (and has the SDK),
-        // so nobody can reload or teleport during a normal game with friends. The host decides;
-        // the other players hear it through devChannel.
-        private static bool LocalDevKeys { get { return Plugin.devKeys != null && Plugin.devKeys.Value; } }
-
-        internal static bool DevKeysAllowed {
-            get {
-                if (!LocalDevKeys) return false;
-                if (NetworkServer.active) return HostAllowsDevKeys();
-                if (!NetworkClient.active) return true;   // not in an online session
-                int value;
-                return devChannel != null && wasConnected && devChannel.TryGet(out value) && value == 1;
-            }
-        }
-
-        // Host: every other player has answered, with DevKeys on
-        private static bool HostAllowsDevKeys() {
-            try {
-                var local = NetworkServer.localConnection;
-                foreach (var pair in NetworkServer.connections) {
-                    NetworkConnectionToClient conn = pair.Value;
-                    if (conn == null || (local != null && conn.Pointer == local.Pointer)) continue;
-                    if (!players.TryGetValue(conn.connectionId, out Player player) || player.answer == null || !player.devKeys) return false;
-                }
-                return true;
-            } catch (Exception) { return false; }
+            return Protocol + "|" + Plugin.Version + "|" + string.Join(";", parts);
         }
 
         // Keeps a name from breaking the format above
@@ -1474,12 +1435,12 @@ namespace BigPuzzleSDK {
             NetworkConnection conn = NetworkClient.active ? NetworkClient.connection : null;
             if (conn == null || !NetworkClient.isConnected) {
                 // Left (or not joined yet): whatever the beacon says is from the old host
-                if (wasConnected) { beacon.ForgetReceived(); if (devChannel != null) devChannel.ForgetReceived(); answeredOn = IntPtr.Zero; answerAt = 0f; }
+                if (wasConnected) { beacon.ForgetReceived(); answeredOn = IntPtr.Zero; answerAt = 0f; }
                 wasConnected = false;
                 return;
             }
             if (!wasConnected) {
-                beacon.ForgetReceived(); if (devChannel != null) devChannel.ForgetReceived();
+                beacon.ForgetReceived();
                 wasConnected = true; connectedAt = Time.unscaledTime; reportedRegister = false; reportedWaiting = false; reportedWaiting5 = false;
                 gotHostList = false; fallbackTries = 0; nextFallback = 0f; worldLoaded = false;
                 if (BigPuzzleEditor.instance != null) BigPuzzleEditor.instance.ForgetBuilt();
@@ -1492,7 +1453,6 @@ namespace BigPuzzleSDK {
                 beacon.Register();
                 if (!reportedRegister) { reportedRegister = true; Plugin.log.LogInfo("[SDK] the game's id list didn't have the host beacon (rebuilt after joining); registered it again."); }
             }
-            if (devChannel != null && !devChannel.IsRegistered()) devChannel.Register();
 
             int value;
             if (!beacon.TryGet(out value)) {   // the host hasn't said it has the SDK (yet)
@@ -1603,7 +1563,6 @@ namespace BigPuzzleSDK {
             public string name = "A player";
             public float since;     // joined (or last reload)
             public string answer;   // null until they answer
-            public bool devKeys;    // their DevKeys setting, from their answer
             public float nextBeacon;   // when to send the beacon again (until they answer)
             public int beaconsSent;
             public bool reported;
@@ -1647,8 +1606,6 @@ namespace BigPuzzleSDK {
                 var gone = new List<int>();
                 foreach (int cid in players.Keys) if (!seen.Contains(cid)) gone.Add(cid);
                 foreach (int cid in gone) players.Remove(cid);
-                // Tell everyone whether the creator keys may be used right now
-                if (devChannel != null) devChannel.Push(LocalDevKeys && HostAllowsDevKeys() ? 1 : 0);
             } catch (Exception ex) {
                 Plugin.log.LogWarning($"[SDK] {ex.GetType().Name}: {ex.Message}");
                 nextHostCheck = Time.unscaledTime + 5f;
@@ -1685,7 +1642,6 @@ namespace BigPuzzleSDK {
                 }
                 bool late = player.answer == null && player.reported;   // warned before it arrived
                 player.answer = text;
-                player.devKeys = text.EndsWith("|dev=1");
                 player.reported = true;
                 if (late) Plugin.log.LogInfo($"[SDK] {player.name} (connection {cid}) answered after all (ignore the warning above).");
                 Compare(player, cid, text, late);
@@ -2206,7 +2162,7 @@ namespace BigPuzzleSDK {
 
     // ----------------------------------------------------------------------
     // Every installed puzzle, read into memory once at start-up (and again on F2): the file's
-    // fingerprint, its puzzle.json, its creator DLLs (loaded), and its asset bundle. Building a
+    // fingerprint, its puzzle.json, and its asset bundle. Building a
     // puzzle in a world then only copies what's already here. The asset bundle is the one part
     // Unity can only open from a file, so it's written to BepInEx/cache/BigPuzzleSDK under the
     // pack's fingerprint (reused across launches), and opened only while its puzzle is built.
@@ -2218,8 +2174,8 @@ namespace BigPuzzleSDK {
         public string name;        // the puzzle's name (its root object), for messages
         public int firstTicket = -1;   // host: where this puzzle's network ids start (-1 = not built)
         public string hash;        // SHA-256 of the whole file (for the multiplayer check)
+        public bool dev;           // found in BepInEx/plugins/BigPuzzleSDK: a puzzle being tested (creator keys work on it)
         public PuzzlePackData data;
-        public Dictionary<string, Assembly> assemblies = new Dictionary<string, Assembly>();
         public string bundlePath;
     }
 
@@ -2227,6 +2183,19 @@ namespace BigPuzzleSDK {
         internal static readonly List<PuzzlePack> packs = new List<PuzzlePack>();
 
         private static string CacheDir { get { return Path.Combine(Paths.CachePath, "BigPuzzleSDK"); } }
+
+        private static bool reportedDev;
+        internal static bool HasDevPuzzles { get { return packs.Exists(p => p.dev); } }
+
+        // Is the puzzle with this id one being tested (see Plugin.DevFolder)?
+        internal static bool IsDevPuzzle(string id) { return id != null && packs.Exists(p => p.dev && p.id == id); }
+
+        private static bool IsInDevFolder(string path) {
+            try {
+                string root = Path.GetFullPath(Plugin.DevFolder).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
+                return Path.GetFullPath(path).StartsWith(root, StringComparison.OrdinalIgnoreCase);
+            } catch (Exception) { return false; }
+        }
 
         // Reads every installed pack. An unchanged pack (same fingerprint) keeps what was read
         // before; changed packs are read again.
@@ -2243,12 +2212,13 @@ namespace BigPuzzleSDK {
                     if (previous.TryGetValue(hash, out PuzzlePack same)) {
                         previous.Remove(hash);
                         same.path = path;
+                        same.dev = IsInDevFolder(path);
                         same.fileName = Path.GetFileNameWithoutExtension(path);
                         packs.Add(same);
                         continue;
                     }
                     PuzzlePack pack = Read(path, bytes, hash);
-                    if (pack != null) packs.Add(pack);
+                    if (pack != null) { pack.dev = IsInDevFolder(path); packs.Add(pack); }
                 } catch (Exception ex) {
                     Plugin.log.LogError($"[Puzzle] Could not read {Path.GetFileName(path)}: {ex.GetType().Name}: {ex.Message}");
                 }
@@ -2259,8 +2229,13 @@ namespace BigPuzzleSDK {
             var byId = new Dictionary<string, PuzzlePack>();
             foreach (PuzzlePack pack in packs.ToArray()) {
                 if (byId.TryGetValue(pack.id, out PuzzlePack first)) {
-                    Plugin.log.LogWarning($"[Puzzle] '{pack.name}' is installed more than once; only loading {first.path}. Skipped: {pack.path}");
-                    packs.Remove(pack);
+                    // A puzzle being tested wins over an installed copy of it, quietly
+                    PuzzlePack keep = pack.dev && !first.dev ? pack : first;
+                    PuzzlePack drop = keep == pack ? first : pack;
+                    if (!(keep.dev && !drop.dev))
+                        Plugin.log.LogWarning($"[Puzzle] '{pack.name}' is installed more than once; only loading {keep.path}. Skipped: {drop.path}");
+                    packs.Remove(drop);
+                    byId[pack.id] = keep;
                     continue;
                 }
                 byId[pack.id] = pack;
@@ -2272,6 +2247,10 @@ namespace BigPuzzleSDK {
 
             CleanCache();
             Plugin.log.LogInfo($"[Puzzle] Read {packs.Count} puzzle pack(s) in {stopwatch.Elapsed.TotalMilliseconds:F0} ms");
+            if (!reportedDev && HasDevPuzzles) {
+                reportedDev = true;
+                Plugin.log.LogInfo("[Puzzle] Creator keys on (a puzzle is in the BigPuzzleSDK folder): Ctrl+F1 teleports to it, Ctrl+F2 reloads.");
+            }
         }
 
         // ---- The gourd tower: exactly one ----
@@ -2360,7 +2339,6 @@ namespace BigPuzzleSDK {
                 hash = hash,
                 bundlePath = Path.Combine(CacheDir, hash + ".bundle"),
             };
-            var dlls = new Dictionary<string, byte[]>();
             bool hasBundle = false;
             using (var zip = new ZipArchive(new MemoryStream(bytes), ZipArchiveMode.Read)) {
                 foreach (ZipArchiveEntry entry in zip.Entries) {
@@ -2374,12 +2352,6 @@ namespace BigPuzzleSDK {
                         }
                     } else if (name == "puzzle.json") {
                         using (var reader = new StreamReader(entry.Open())) pack.data = JsonSerializer.Deserialize<PuzzlePackData>(reader.ReadToEnd());
-                    } else if (name.StartsWith("scripts/") && name.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)) {
-                        using (Stream input = entry.Open())
-                        using (var buffer = new MemoryStream()) {
-                            input.CopyTo(buffer);
-                            dlls[Path.GetFileNameWithoutExtension(name)] = buffer.ToArray();
-                        }
                     }
                 }
             }
@@ -2403,7 +2375,6 @@ namespace BigPuzzleSDK {
                 pack.id = "file:" + pack.fileName.ToLowerInvariant();
                 Plugin.log.LogWarning($"[Puzzle] {Path.GetFileName(path)} has no puzzle id (exported with an older exporter). Re-export it, or renaming the file will break multiplayer.");
             }
-            pack.assemblies = PuzzleLoader.LoadCreatorAssemblies(dlls);
             return pack;
         }
 
@@ -2480,8 +2451,6 @@ namespace BigPuzzleSDK {
             public readonly List<PendingScript> pending = new List<PendingScript>();
             // GameObject instance id -> scripts added to it, in export order
             public readonly Dictionary<int, List<LoadedScript>> scriptsByObject = new Dictionary<int, List<LoadedScript>>();
-            // Creator-written code shipped in this pack: assembly name -> loaded assembly
-            public Dictionary<string, Assembly> creatorAssemblies = new Dictionary<string, Assembly>();
         }
 
         private class PendingScript {
@@ -2496,6 +2465,7 @@ namespace BigPuzzleSDK {
         }
 
         private static readonly Dictionary<string, Type> typeCache = new Dictionary<string, Type>();
+        private static Dictionary<string, Type> scriptsBySimpleName;   // this plugin's scripts by class name, built on first use
 
         // Called once before the packs are loaded: everything that belongs to the whole set
         public static void BeginLoadAll() {
@@ -2517,7 +2487,6 @@ namespace BigPuzzleSDK {
             GameObject root = null;
             try {
                 PuzzlePackData pack = puzzlePack.data;
-                Dictionary<string, Assembly> creatorAssemblies = puzzlePack.assemblies;
 
                 bundle = PuzzleLibrary.OpenBundle(puzzlePack);
                 if (bundle == null) return null;
@@ -2532,7 +2501,7 @@ namespace BigPuzzleSDK {
                 root = UnityEngine.Object.Instantiate((UnityEngine.Object)prefab, holder.transform).Cast<GameObject>();
                 if (pack != null && !string.IsNullOrEmpty(pack.rootName)) root.name = pack.rootName;
 
-                var ctx = new BuildContext { root = root.transform, bundle = bundle, creatorAssemblies = creatorAssemblies };
+                var ctx = new BuildContext { root = root.transform, bundle = bundle };
                 BuildRoot = root.transform;
                 int firstTicket = Tickets.BeginPuzzle(puzzlePack.name, startTicket);
 
@@ -2625,181 +2594,6 @@ namespace BigPuzzleSDK {
 
         private static string loadedName;   // set once a load succeeds, for the summary line
 
-        // Creator DLLs already loaded this session, by content hash. A class registered with the
-        // game cannot be unregistered, so an unchanged DLL must be reused, not loaded again.
-        private static readonly Dictionary<string, Assembly> loadedCreatorAssemblies = new Dictionary<string, Assembly>();
-
-        // Creator classes we tried to register with the game: type -> did it work
-        private static readonly Dictionary<Type, bool> injectedCreatorTypes = new Dictionary<Type, bool>();
-
-        // How many different versions of each creator DLL were loaded this session, and the
-        // namespace suffix given to each loaded version ("" for the first).
-        private static readonly Dictionary<string, int> creatorLoadCounts = new Dictionary<string, int>();
-        private static readonly Dictionary<Assembly, string> creatorSuffixes = new Dictionary<Assembly, string>();
-        private const string ReloadRootNamespace = "PuzzleReload";
-
-        private static string ReloadedNamespace(string original, string suffix) {
-            return string.IsNullOrEmpty(original) ? ReloadRootNamespace + suffix : original + suffix;
-        }
-
-        // Rewrites a creator DLL in memory: points Unity's logging calls (Debug.Log and friends,
-        // which don't exist at runtime in the game) at CreatorLog, and, when a suffix is given,
-        // moves every class into a renamed namespace.
-        private static byte[] RewriteCreatorDll(byte[] bytes, string suffix) {
-            using (var input = new MemoryStream(bytes))
-            using (var definition = Mono.Cecil.AssemblyDefinition.ReadAssembly(input)) {
-                int redirected = 0;
-                foreach (Mono.Cecil.ModuleDefinition module in definition.Modules) {
-                    redirected += RedirectLogCalls(module);
-                    if (suffix == null) continue;
-                    foreach (Mono.Cecil.TypeDefinition type in module.Types) {
-                        if (type.Name.StartsWith("<")) continue;   // compiler-made helpers
-                        type.Namespace = ReloadedNamespace(type.Namespace, suffix);
-                    }
-                }
-                if (redirected == 0 && suffix == null) return bytes;
-                using (var output = new MemoryStream()) {
-                    definition.Write(output);
-                    return output.ToArray();
-                }
-            }
-        }
-
-        private static string CecilTypeName(Mono.Cecil.TypeReference type) {
-            return type.FullName;
-        }
-
-        // Finds the CreatorLog stand-in with the same name and parameter types. For a call on an
-        // ILogger the logger itself becomes the first parameter.
-        private static System.Reflection.MethodInfo FindLogStandIn(Mono.Cecil.MethodReference call) {
-            bool onLogger = call.DeclaringType.FullName == "UnityEngine.ILogger";
-            int extra = onLogger ? 1 : 0;
-            foreach (var candidate in typeof(CreatorLog).GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)) {
-                if (candidate.Name != call.Name) continue;
-                var ps = candidate.GetParameters();
-                if (ps.Length != call.Parameters.Count + extra) continue;
-                if (onLogger != (ps.Length > 0 && ps[0].ParameterType.FullName == "UnityEngine.ILogger")) continue;
-                bool same = true;
-                for (int i = 0; i < call.Parameters.Count && same; i++)
-                    same = ps[i + extra].ParameterType.FullName == CecilTypeName(call.Parameters[i].ParameterType);
-                if (same) return candidate;
-            }
-            return null;
-        }
-
-        private static int RedirectLogCalls(Mono.Cecil.ModuleDefinition module) {
-            int count = 0;
-            foreach (Mono.Cecil.TypeDefinition type in module.GetTypes())
-                foreach (Mono.Cecil.MethodDefinition method in type.Methods) {
-                    if (!method.HasBody) continue;
-                    foreach (var instruction in method.Body.Instructions) {
-                        if (instruction.OpCode != Mono.Cecil.Cil.OpCodes.Call && instruction.OpCode != Mono.Cecil.Cil.OpCodes.Callvirt) continue;
-                        var call = instruction.Operand as Mono.Cecil.MethodReference;
-                        if (call == null || call.ReturnType.FullName != "System.Void") continue;
-                        string owner = call.DeclaringType.FullName;
-                        bool isLog = owner == "UnityEngine.Debug" || owner == "UnityEngine.ILogger";
-                        // print(object): called on MonoBehaviour or on the creator's own class
-                        // (a class of the DLL is only skipped if it defines its own print)
-                        if (!isLog && call.Name == "print" && call.Parameters.Count == 1 && call.HasThis == false) {
-                            // (no Resolve(): the game's Unity assemblies can't be loaded by Cecil)
-                            var def = call.DeclaringType.Scope == module ? module.GetType(owner) : null;
-                            isLog = owner == "UnityEngine.MonoBehaviour" || (def != null && !System.Linq.Enumerable.Any(def.Methods, m => m.Name == "print"));
-                        }
-                        if (!isLog) continue;
-                        var standIn = FindLogStandIn(call);
-                        if (standIn == null) continue;
-                        instruction.OpCode = Mono.Cecil.Cil.OpCodes.Call;
-                        instruction.Operand = module.ImportReference(standIn);
-                        count++;
-                    }
-                }
-            return count;
-        }
-
-        // Full names of every creator class loaded this session (after any renaming)
-        private static readonly HashSet<string> loadedCreatorTypeNames = new HashSet<string>();
-        private static int renameCount;
-
-        private static string RenamedFullName(string fullName, string suffix) {
-            int dot = fullName.LastIndexOf('.');
-            string ns = dot < 0 ? "" : fullName.Substring(0, dot);
-            string shortName = dot < 0 ? fullName : fullName.Substring(dot + 1);
-            return ReloadedNamespace(ns, suffix) + "." + shortName;
-        }
-
-        // The full names of a DLL's top-level classes, read without loading it
-        private static List<string> CreatorTypeNames(byte[] bytes) {
-            var names = new List<string>();
-            try {
-                using (var input = new MemoryStream(bytes))
-                using (var definition = Mono.Cecil.AssemblyDefinition.ReadAssembly(input)) {
-                    foreach (Mono.Cecil.ModuleDefinition module in definition.Modules)
-                        foreach (Mono.Cecil.TypeDefinition type in module.Types) {
-                            if (type.Name.StartsWith("<")) continue;   // compiler-made helpers
-                            names.Add(string.IsNullOrEmpty(type.Namespace) ? type.Name : type.Namespace + "." + type.Name);
-                        }
-                }
-            } catch (Exception ex) {
-                Plugin.log.LogWarning($"[Creator] could not read the class names in a DLL: {ex.GetType().Name}: {ex.Message}");
-            }
-            return names;
-        }
-
-        // Finds a creator class by the name the exporter wrote, also in a hot-reloaded DLL
-        // whose namespaces were renamed.
-        private static Type FindCreatorType(Assembly assembly, string typeName) {
-            Type type = assembly.GetType(typeName, false);
-            if (type != null) return type;
-            if (!creatorSuffixes.TryGetValue(assembly, out string suffix) || suffix == "") return null;
-            int dot = typeName.LastIndexOf('.');
-            string ns = dot < 0 ? "" : typeName.Substring(0, dot);
-            string shortName = dot < 0 ? typeName : typeName.Substring(dot + 1);
-            return assembly.GetType(ReloadedNamespace(ns, suffix) + "." + shortName, false);
-        }
-
-        // Loads a pack's DLLs (file name without .dll -> contents), already read into memory
-        internal static Dictionary<string, Assembly> LoadCreatorAssemblies(Dictionary<string, byte[]> dlls) {
-            var result = new Dictionary<string, Assembly>();
-            foreach (var pair in dlls) {
-                string name = pair.Key;
-                try {
-                    byte[] bytes = pair.Value;
-                    string hash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(bytes));
-                    if (!loadedCreatorAssemblies.TryGetValue(hash, out Assembly assembly)) {
-                        // The game cannot forget or replace a registered class, and two classes
-                        // can't share a full name. So a new DLL is loaded as it is only when its
-                        // name is new and none of its classes clash with one already loaded:
-                        // a changed DLL (hot reload) or another puzzle's DLL with a clashing class
-                        // gets its classes moved into a fresh namespace instead.
-                        creatorLoadCounts.TryGetValue(name, out int loads);
-                        creatorLoadCounts[name] = loads + 1;
-                        List<string> typeNames = CreatorTypeNames(bytes);
-                        bool clash = typeNames.Exists(t => loadedCreatorTypeNames.Contains(t));
-                        string suffix = "";
-                        if (loads > 0 || clash) {
-                            renameCount++;
-                            suffix = "_r" + renameCount;
-                            bytes = RewriteCreatorDll(bytes, suffix);
-                            if (clash && loads == 0) Plugin.log.LogInfo($"[Creator] {name}.dll has a class with the same name as another puzzle's; loading it under its own namespace");
-                        }
-                        else {
-                            try { bytes = RewriteCreatorDll(bytes, null); }
-                            catch (Exception ex) { Plugin.log.LogWarning($"[Creator] could not redirect {name}.dll's Debug.Log calls: {ex.GetType().Name}: {ex.Message}"); }
-                        }
-                        assembly = Assembly.Load(bytes);
-                        loadedCreatorAssemblies[hash] = assembly;
-                        creatorSuffixes[assembly] = suffix;
-                        foreach (string t in typeNames)
-                            loadedCreatorTypeNames.Add(suffix == "" ? t : RenamedFullName(t, suffix));
-                    }
-                    result[name] = assembly;
-                } catch (Exception ex) {
-                    Plugin.log.LogError($"[Creator] Could not load {name}.dll: {ex.GetType().Name}: {ex.Message}");
-                }
-            }
-            return result;
-        }
-
         // The game's copy of each shader name, looked up once and remembered between loads.
         // null = the game has no shader with that name.
         private static readonly Dictionary<string, Shader> gameShaders = new Dictionary<string, Shader>();
@@ -2861,7 +2655,7 @@ namespace BigPuzzleSDK {
             object instance = null;
             try {
                 if (!string.IsNullOrEmpty(scriptData.assembly)) {
-                    // Creator-written script: its code is in a DLL shipped with the pack
+                    // Creator-written script: its code is in the puzzle's own BepInEx plugin, which registered its assembly
                     // First choice: a real component on the object, like any other script.
                     instance = AttachCreatorScript(go, scriptData, ctx);
                     if (instance != null) {
@@ -2896,13 +2690,35 @@ namespace BigPuzzleSDK {
             list.Add(new LoadedScript { typeName = scriptData.typeName, instance = instance });
         }
 
+        // Code plugins that have registered with PuzzleSDK.RegisterAssemblyOf (called by the plugin class the exporter adds): assembly name -> assembly.
+        // They are ordinary BepInEx plugins, loaded by BepInEx; this mod never loads code itself.
+        private static readonly Dictionary<string, Assembly> registeredAssemblies = new Dictionary<string, Assembly>();
+
+        // Creator classes we tried to register with the game: type -> did it work
+        private static readonly Dictionary<Type, bool> injectedCreatorTypes = new Dictionary<Type, bool>();
+
+        internal static void RegisterAssembly(Assembly assembly) {
+            if (assembly == null) { Plugin.log.LogWarning("[Creator] RegisterAssembly was called with no assembly."); return; }
+            string name = assembly.GetName().Name;
+            if (name == "Assembly-CSharp" || assembly == typeof(PuzzleLoader).Assembly) {
+                Plugin.log.LogWarning($"[Creator] An assembly named '{name}' cannot register as a puzzle's code. Give the puzzle's scripts their own assembly (an .asmdef) with a unique name.");
+                return;
+            }
+            if (registeredAssemblies.TryGetValue(name, out Assembly known)) {
+                if (known != assembly) Plugin.log.LogWarning($"[Creator] Two different assemblies are both named '{name}'; keeping the first.");
+                return;
+            }
+            registeredAssemblies[name] = assembly;
+            Plugin.log.LogInfo($"[Creator] Registered puzzle code '{name}'.");
+        }
+
         // Registers a creator's MonoBehaviour class with the game and attaches it to the object as a
         // real component, so transform, gameObject, Update, Start and the rest work as in Unity.
         // Returns null if that is not possible; the caller then falls back to a detached object.
         private static object AttachCreatorScript(GameObject go, PuzzleScriptData scriptData, BuildContext ctx) {
-            if (!ctx.creatorAssemblies.TryGetValue(scriptData.assembly, out Assembly assembly)) return null;
+            if (!registeredAssemblies.TryGetValue(scriptData.assembly, out Assembly assembly)) return null;
 
-            Type type = FindCreatorType(assembly, scriptData.typeName);
+            Type type = assembly.GetType(scriptData.typeName, false);
             if (type == null || type.IsAbstract || !typeof(MonoBehaviour).IsAssignableFrom(type)) return null;
             if (!EnsureInjected(type)) return null;
 
@@ -2945,14 +2761,14 @@ namespace BigPuzzleSDK {
         // game object as a component, so inside the script 'transform', 'gameObject', GetComponent
         // and Unity messages such as Update do not work; fields and public functions do.
         private static object CreateCreatorScript(GameObject go, PuzzleScriptData scriptData, BuildContext ctx) {
-            if (!ctx.creatorAssemblies.TryGetValue(scriptData.assembly, out Assembly assembly)) {
-                Plugin.log.LogWarning($"[Creator] Script '{scriptData.typeName}' on '{go.name}' needs {scriptData.assembly}.dll, which is not in the pack. Skipped.");
+            if (!registeredAssemblies.TryGetValue(scriptData.assembly, out Assembly assembly)) {
+                Plugin.log.LogWarning($"[Creator] Script '{scriptData.typeName}' on '{go.name}' needs the puzzle's code plugin '{scriptData.assembly}', which is not installed or did not register. Skipped.");
                 return null;
             }
 
-            Type type = FindCreatorType(assembly, scriptData.typeName);
+            Type type = assembly.GetType(scriptData.typeName, false);
             if (type == null) {
-                Plugin.log.LogWarning($"[Creator] {scriptData.assembly}.dll has no class '{scriptData.typeName}'. Skipped.");
+                Plugin.log.LogWarning($"[Creator] The plugin '{scriptData.assembly}' has no class '{scriptData.typeName}'. Skipped.");
                 return null;
             }
 
@@ -2981,22 +2797,34 @@ namespace BigPuzzleSDK {
             if (!pending.detached && pending.instance is Behaviour behaviour) behaviour.enabled = pending.data.enabled;
         }
 
-        private static void ApplyField(object instance, PuzzleFieldData field, BuildContext ctx) {
-            const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
+        // The settable member (a plain field, or for the game's own scripts the property Il2CppInterop
+        // exposes) a serialized field name refers to. Looked up once per type and name, not per script.
+        private struct SettableMember { public FieldInfo field; public PropertyInfo property; }
+        private static readonly Dictionary<(Type, string), SettableMember> settableCache = new Dictionary<(Type, string), SettableMember>();
 
-            for (Type t = instance.GetType(); t != null && t != typeof(object); t = t.BaseType) {
-                // Mod-defined and creator scripts: plain C# fields
-                FieldInfo fi = t.GetField(field.name, flags);
-                if (fi != null) {
-                    fi.SetValue(instance, ConvertField(field, fi.FieldType, ctx));
-                    return;
-                }
-                // The game's own scripts: Il2CppInterop exposes their fields as properties
-                PropertyInfo pi = t.GetProperty(field.name, flags);
-                if (pi != null && pi.CanWrite) {
-                    pi.SetValue(instance, ConvertField(field, pi.PropertyType, ctx));
-                    return;
-                }
+        private static SettableMember FindSettable(Type type, string name) {
+            if (settableCache.TryGetValue((type, name), out SettableMember known)) return known;
+            const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
+            var found = new SettableMember();
+            for (Type t = type; t != null && t != typeof(object); t = t.BaseType) {
+                FieldInfo fi = t.GetField(name, flags);
+                if (fi != null) { found.field = fi; break; }
+                PropertyInfo pi = t.GetProperty(name, flags);
+                if (pi != null && pi.CanWrite) { found.property = pi; break; }
+            }
+            settableCache[(type, name)] = found;
+            return found;
+        }
+
+        private static void ApplyField(object instance, PuzzleFieldData field, BuildContext ctx) {
+            SettableMember member = FindSettable(instance.GetType(), field.name);
+            if (member.field != null) {
+                member.field.SetValue(instance, ConvertField(field, member.field.FieldType, ctx));   // mod-defined and creator scripts
+                return;
+            }
+            if (member.property != null) {
+                member.property.SetValue(instance, ConvertField(field, member.property.PropertyType, ctx));   // the game's own scripts
+                return;
             }
 
             // Fields that packs exported earlier may still carry (removed from the SDK): ignored quietly
@@ -3257,9 +3085,12 @@ namespace BigPuzzleSDK {
             if (found == null) {
                 string simpleName = fullName.Substring(fullName.LastIndexOf('.') + 1);
                 if (simpleName == "BigPuzzleSDK") simpleName = "PuzzleSDK";   // the main class's old name (older packs)
-                foreach (Type t in Assembly.GetExecutingAssembly().GetTypes()) {
-                    if (t.Name == simpleName && typeof(MonoBehaviour).IsAssignableFrom(t)) { found = t; break; }
+                if (scriptsBySimpleName == null) {
+                    scriptsBySimpleName = new Dictionary<string, Type>();
+                    foreach (Type t in Assembly.GetExecutingAssembly().GetTypes())
+                        if (typeof(MonoBehaviour).IsAssignableFrom(t) && !scriptsBySimpleName.ContainsKey(t.Name)) scriptsBySimpleName[t.Name] = t;
                 }
+                scriptsBySimpleName.TryGetValue(simpleName, out found);
             }
 
             typeCache[fullName] = found;
@@ -3268,9 +3099,15 @@ namespace BigPuzzleSDK {
 
         // Il2CppObjectBase.TryCast<T>() with a runtime Type. For injected classes this returns
         // the managed instance, which is what reflection needs to set fields on.
+        private static readonly MethodInfo tryCastDefinition = typeof(Il2CppObjectBase).GetMethod(nameof(Il2CppObjectBase.TryCast));
+        private static readonly Dictionary<Type, MethodInfo> tryCastByType = new Dictionary<Type, MethodInfo>();
+
         private static object CastTo(Il2CppObjectBase obj, Type type) {
-            MethodInfo tryCast = typeof(Il2CppObjectBase).GetMethod(nameof(Il2CppObjectBase.TryCast));
-            return tryCast.MakeGenericMethod(type).Invoke(obj, null);
+            if (!tryCastByType.TryGetValue(type, out MethodInfo cast)) {
+                cast = tryCastDefinition.MakeGenericMethod(type);
+                tryCastByType[type] = cast;
+            }
+            return cast.Invoke(obj, null);
         }
     }
 
@@ -3313,15 +3150,13 @@ namespace BigPuzzleSDK {
     internal static class HeldSwitchRefresh {
         internal static void Run() {
             try {
-                MethodInfo hook = AccessTools.Method(typeof(PlayerNetworking), "OnSetHeldSwitch");
-                if (hook == null) { Plugin.log.LogWarning("[Hands] PlayerNetworking.OnSetHeldSwitch not found; players holding a button before you joined won't show their hand."); return; }
                 int refreshed = 0;
                 foreach (UnityEngine.Object o in Resources.FindObjectsOfTypeAll(Il2CppType.Of<PlayerNetworking>())) {
                     PlayerNetworking pn = o != null ? o.TryCast<PlayerNetworking>() : null;
                     if (pn == null || !pn.gameObject.scene.IsValid() || pn.isLocalPlayer) continue;
                     ShellReferenceWithActionNumber now = pn.heldSwitch;
                     if (now.shellReference.isEmpty) continue;
-                    hook.Invoke(pn, new object[] { new ShellReferenceWithActionNumber(), now });
+                    pn.OnSetHeldSwitch(new ShellReferenceWithActionNumber(), now);
                     refreshed++;
                 }
             } catch (Exception ex) {

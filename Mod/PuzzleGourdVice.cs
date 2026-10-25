@@ -548,23 +548,9 @@ namespace BigPuzzleSDK {
         internal static void ResetIdentity(GameObject go) {
             NetworkIdentity identity = go.GetComponent<NetworkIdentity>();
             if (identity == null) return;
-            SetMember(identity, "hasSpawned", false);
-            SetMember(identity, "sceneId", 0UL);
-            SetMember(identity, "netId", 0u);
-        }
-
-        private static void SetMember(NetworkIdentity target, string member, object value) {
-            const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
-            try {
-                PropertyInfo prop = target.GetType().GetProperty(member, flags);
-                if (prop != null && prop.CanWrite) { prop.SetValue(target, value); return; }
-                FieldInfo field = target.GetType().GetField(member, flags);
-                if (field != null) { field.SetValue(target, value); return; }
-                Plugin.log.LogWarning($"[PuzzleGourdVice] NetworkIdentity has no settable '{member}'");
-            } catch (Exception ex) {
-                Exception inner = ex.InnerException ?? ex;
-                Plugin.log.LogWarning($"[PuzzleGourdVice] could not set '{member}': {inner.GetType().Name}: {inner.Message}");
-            }
+            identity.hasSpawned = false;
+            identity.sceneId = 0UL;
+            identity.netId = 0u;
         }
 
         // Moves the sleeping copy of the vanilla gourd out of the vice. The host then wakes it and

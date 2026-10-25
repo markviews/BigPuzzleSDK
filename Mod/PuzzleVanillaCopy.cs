@@ -387,7 +387,7 @@ public class PuzzleVanillaCopy : MonoBehaviour {
     }
 
     // The copy's prop holders (for the components that watch them)
-    internal List<PropHome> Homes => homes;
+    internal List<PropHome> Homes { [Il2CppInterop.Runtime.Attributes.HideFromIl2Cpp] get { return homes; } }
 
     private void Update() {
         // Component-specific watching
@@ -454,19 +454,9 @@ public class PuzzleVanillaCopy : MonoBehaviour {
     private static void ResetIdentity(GameObject go) {
         NetworkIdentity identity = go.GetComponent<NetworkIdentity>();
         if (identity == null) return;
-        SetMember(identity, "hasSpawned", false);
-        SetMember(identity, "sceneId", 0UL);
-        SetMember(identity, "netId", 0u);
-    }
-
-    private static void SetMember(NetworkIdentity target, string member, object value) {
-        const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
-        try {
-            PropertyInfo prop = target.GetType().GetProperty(member, flags);
-            if (prop != null && prop.CanWrite) { prop.SetValue(target, value); return; }
-            FieldInfo field = target.GetType().GetField(member, flags);
-            if (field != null) field.SetValue(target, value);
-        } catch (Exception) { }
+        identity.hasSpawned = false;
+        identity.sceneId = 0UL;
+        identity.netId = 0u;
     }
 
     // The copy remembers the original's holder (by network id) and its save identity: forget both
@@ -1380,7 +1370,7 @@ public class PuzzleSoundPegAnswer : PuzzleVanillaCopy {
 
     // The custom sounds on the Sound Pegs in this puzzle, in a fixed order (by name), so every PC numbers them the same
     private List<AudioClip> Clips {
-        get {
+        [Il2CppInterop.Runtime.Attributes.HideFromIl2Cpp] get {
             int root = transform.root.GetInstanceID();
             var list = new List<AudioClip>();
             foreach (PuzzleVanillaCopy other in all) {
@@ -2076,7 +2066,7 @@ public class PuzzleButtonNHold : PuzzleVanillaCopy {
 
     // The buttons in this one's group: same puzzle, same Group, switched on (a PuzzleHider may
     // have removed some for this lobby size). Every PC works it out the same way.
-    private List<PuzzleButtonNHold> FindMembers() {
+    [Il2CppInterop.Runtime.Attributes.HideFromIl2Cpp] private List<PuzzleButtonNHold> FindMembers() {
         var list = new List<PuzzleButtonNHold>();
         int root = transform.root.GetInstanceID();
         foreach (PuzzleVanillaCopy c in all)
