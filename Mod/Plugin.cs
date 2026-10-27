@@ -27,7 +27,7 @@ using static PropertyBlockHelper;
 namespace BigPuzzleSDK {
     [BepInPlugin("markviews.BigPuzzleSDK", "Big Puzzle SDK", Version)]
     public class Plugin : BasePlugin {
-        internal const string Version = "0.1.3";
+        internal const string Version = "0.1.4";
 
         internal static ManualLogSource log;
 

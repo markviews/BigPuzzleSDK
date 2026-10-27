@@ -743,7 +743,7 @@ internal class PuzzlePressInOrderEditor : PuzzleComponentEditor {
         // Default Text only means something for the two signs
         string kind = type.enumValueIndex >= 0 && type.enumValueIndex < type.enumNames.Length ? type.enumNames[type.enumValueIndex] : "";
         if (kind == "SpareSign" || kind == "PermoSign") EditorGUILayout.PropertyField(serializedObject.FindProperty("defaultText"));
-        if (kind == "Kettle" || kind == "WalkieTalkie" || kind == "Backpack" || kind == "Belt" || kind == "FlareGun") EditorGUILayout.PropertyField(serializedObject.FindProperty("itemColor"));
+        if (kind == "Kettle" || kind == "WalkieTalkie" || kind == "Backpack" || kind == "Belt" || kind == "FlareGun" || kind == "FoldingChair") EditorGUILayout.PropertyField(serializedObject.FindProperty("itemColor"));
         if (kind == "FlareGun") EditorGUILayout.PropertyField(serializedObject.FindProperty("flareColor"));
         if (kind == "Buoy" || kind == "BuoyRed") EditorGUILayout.PropertyField(serializedObject.FindProperty("includeBase"));
         EditorGUILayout.PropertyField(serializedObject.FindProperty("savesOnReload"));
