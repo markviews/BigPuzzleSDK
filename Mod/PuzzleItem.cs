@@ -18,6 +18,7 @@ public class PuzzleItem : PuzzleVanillaCopy, ISavedHeld {
     // Set in the Inspector (filled in by the loader); the names must match the Unity-side fields
     private float mass = 1f;
     private PuzzleItemSounds sounds = PuzzleItemSounds.Peg;   // grab, release, impact and roll sounds
+    private PuzzleItemUseAnimation useAnimation = PuzzleItemUseAnimation.None;   // played while a player uses the item
     private bool canBelt = true;           // can go on a player's belt (holster)
     private bool canBackpack = true;       // can go in a player's backpack
     private bool savesOnReload = true;     // saved like gourds: held when the game saves or reloads = back at the spawn area
@@ -26,6 +27,8 @@ public class PuzzleItem : PuzzleVanillaCopy, ISavedHeld {
     // Filled in by the loader from the UnityEvents wired up in the Inspector
     private PuzzleEvent onPickedUp;
     private PuzzleEvent onDropped;
+    private PuzzleEvent onUse;
+    private PuzzleEvent onRelease;
 
     private Prop prop;
     private ulong itemId;
@@ -39,6 +42,11 @@ public class PuzzleItem : PuzzleVanillaCopy, ISavedHeld {
 
     // Read-only for scripts
     public bool IsHeld => held;
+
+    internal PuzzleItemUseAnimation UseAnimation => useAnimation;
+
+    // The game's prop behind this item (null until it exists)
+    internal Prop GameProp => prop;
 
     // The cowbell's parts that don't belong on a generic item
     private static readonly string[] RemovedParts = GameRefs.Item.RemovedParts;
@@ -115,6 +123,14 @@ public class PuzzleItem : PuzzleVanillaCopy, ISavedHeld {
             Transform child = transform.GetChild(ci);
             if (child != null && child.gameObject != copy && child != pivot) children.Add(child);
         }
+        // The creator's own colliders (on this object and under it) become the item's shape, so a sphere rolls
+        var shapes = new List<Collider>();
+        foreach (Component c in GetComponents<Collider>()) { Collider own = c != null ? c.TryCast<Collider>() : null; if (own != null) shapes.Add(own); }
+        foreach (Transform child in children)
+            foreach (Component c in child.GetComponentsInChildren(Il2CppType.Of<Collider>(), true)) {
+                Collider found = c != null ? c.TryCast<Collider>() : null;
+                if (found != null) shapes.Add(found);
+            }
         Transform kernal = null;
         try { kernal = prop.kernal; } catch (Exception) { }
         if (kernal == null) kernal = bell.parent;
@@ -149,6 +165,8 @@ public class PuzzleItem : PuzzleVanillaCopy, ISavedHeld {
             collider.center = box.Value.center;
             collider.size = Vector3.Max(box.Value.size, new Vector3(0.02f, 0.02f, 0.02f));
         }
+        // Colliders the creator gave the object replace that box (it stays, 1 mm wide, so the game's list of the item's colliders is intact)
+        try { UseCreatorColliders(shapes, bell, collider, box); } catch (Exception ex) { log.LogWarning($"[PuzzleItem] '{name}': could not use the object's own colliders ({ex.GetType().Name}: {ex.Message}); it keeps a box."); }
 
         ApplyGroups();
         ApplySounds();
@@ -156,6 +174,58 @@ public class PuzzleItem : PuzzleVanillaCopy, ISavedHeld {
         itemId = NetItems.IdFor(transform, "prop0");   // the same id the spawn uses: it names the item in the save file
 
         try { prop.rb.mass = Mathf.Max(0.01f, mass); } catch (Exception ex) { log.LogWarning($"[PuzzleItem] could not set the mass: {ex.GetType().Name}: {ex.Message}"); }
+    }
+
+    // Copies the creator's solid colliders (box, sphere, capsule) onto the item, in the same places, and shrinks the
+    // cowbell's box to nothing. Triggers are left out. The game's held-item code only understands those three
+    // shapes (a Mesh Collider makes it throw errors when the item is picked up), so if the object has any other
+    // solid collider, or none, the box around the model stays instead.
+    private void UseCreatorColliders(List<Collider> shapes, Transform bell, BoxCollider cowbellBox, Bounds? box) {
+        foreach (Collider src in shapes) {
+            if (src == null || src.isTrigger) continue;
+            if (src.TryCast<BoxCollider>() == null && src.TryCast<SphereCollider>() == null && src.TryCast<CapsuleCollider>() == null) {
+                Plugin.log.LogInfo($"[PuzzleItem] '{name}': it has a {src.GetIl2CppType().Name}, which the game can't hold, so the item uses one box around its model. Use Box, Sphere or Capsule colliders to get a different shape.");
+                return;
+            }
+        }
+        var made = new List<Collider>();
+        int number = 0;
+        foreach (Collider src in shapes) {
+            if (src == null || src.isTrigger) continue;
+            Collider copy = null;
+            var go = new GameObject("Collider " + (++number));
+            go.transform.SetParent(bell, false);
+            go.layer = bell.gameObject.layer;
+            go.transform.position = src.transform.position;
+            go.transform.rotation = src.transform.rotation;
+            Vector3 want = src.transform.lossyScale, have = go.transform.lossyScale;
+            go.transform.localScale = new Vector3(have.x != 0f ? want.x / have.x : 1f, have.y != 0f ? want.y / have.y : 1f, have.z != 0f ? want.z / have.z : 1f);
+
+            BoxCollider b = src.TryCast<BoxCollider>();
+            SphereCollider sp = src.TryCast<SphereCollider>();
+            CapsuleCollider cap = src.TryCast<CapsuleCollider>();
+            if (b != null) { BoxCollider n = go.AddComponent<BoxCollider>(); n.center = b.center; n.size = b.size; copy = n; }
+            else if (sp != null) { SphereCollider n = go.AddComponent<SphereCollider>(); n.center = sp.center; n.radius = sp.radius; copy = n; }
+            else if (cap != null) { CapsuleCollider n = go.AddComponent<CapsuleCollider>(); n.center = cap.center; n.radius = cap.radius; n.height = cap.height; n.direction = cap.direction; copy = n; }
+            if (copy == null) { UnityEngine.Object.Destroy(go); continue; }
+            PhysicsMaterial material = src.sharedMaterial;
+            if (material == null && cowbellBox != null) material = cowbellBox.sharedMaterial;
+            if (material != null) copy.sharedMaterial = material;
+            made.Add(copy);
+        }
+        if (made.Count == 0) return;
+
+        if (cowbellBox != null) {
+            cowbellBox.center = box.HasValue ? box.Value.center : Vector3.zero;
+            cowbellBox.size = new Vector3(0.001f, 0.001f, 0.001f);
+        }
+        // The game keeps a list of the item's colliders (to change them while it is held); make sure ours are in it
+        try { prop.PreWarmCollidersCollection(); } catch (Exception) { }
+        try {
+            var list = prop.propColliders;
+            if (list != null) foreach (Collider c in made) if (!list.Contains(c)) list.Add(c);
+        } catch (Exception) { }
+        Plugin.log.LogInfo($"[PuzzleItem] '{name}': using {made.Count} collider(s) from the object instead of a box.");
     }
 
     // Belt (holster) and backpack are groups on the prop; the pose limit stays. The cowbell this is
@@ -292,6 +362,13 @@ public class PuzzleItem : PuzzleVanillaCopy, ISavedHeld {
             result.Encapsulate(matrix.MultiplyPoint3x4(corner));
         }
         return result;
+    }
+
+    // Host: a player pressed (down) or released the use button on it
+    internal void RaiseUse(bool down) {
+        if (!PuzzleSDK.IsHost) return;
+        PuzzleEvent e = down ? onUse : onRelease;
+        if (e != null) e.Invoke();
     }
 
     // Host: events when a player picks it up or lets go (in a backpack counts as held)

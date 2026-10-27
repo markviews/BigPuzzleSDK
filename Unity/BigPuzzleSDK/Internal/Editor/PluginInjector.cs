@@ -11,6 +11,9 @@
 //
 // The types are looked up in the compile-only stub DLLs Unity built (PluginBuild/Stubs); the references
 // written into the plugin say "BepInEx.Core" / "BepInEx.Unity.IL2CPP" 6.0.0.0, which BepInEx binds to its own.
+//
+// The copy also gets its calls to Debug.Log and friends (and print) pointed at BigPuzzleSDK.CreatorLog, because the
+// game's Unity has no such methods for a DLL built the usual way to call. The scripts in the project are not touched.
 using System;
 using System.IO;
 using System.Linq;
@@ -42,6 +45,39 @@ internal static class PluginInjector {
         }
     }
 
+    // Points every call to UnityEngine.Debug's logging methods (and MonoBehaviour.print) at the CreatorLog method with
+    // the same name and parameters. A call with no such stand-in is left as it is.
+    private static void RedirectLogging(ModuleDefinition module, TypeDefinition creatorLog) {
+        if (creatorLog == null) throw new Exception("The SDK's stub assembly has no CreatorLog class (BigPuzzleSDK did not compile?). See the Console.");
+        foreach (TypeDefinition type in module.GetTypes()) {
+            foreach (MethodDefinition method in type.Methods) {
+                if (!method.HasBody) continue;
+                foreach (Instruction instruction in method.Body.Instructions) {
+                    if (instruction.OpCode != OpCodes.Call && instruction.OpCode != OpCodes.Callvirt) continue;
+                    MethodReference called = instruction.Operand as MethodReference;
+                    if (called == null || called.DeclaringType == null) continue;
+                    string owner = called.DeclaringType.FullName;
+                    if (owner != "UnityEngine.Debug" && !(owner == "UnityEngine.MonoBehaviour" && called.Name == "print")) continue;
+                    MethodDefinition stand = FindStandIn(creatorLog, called);
+                    if (stand == null) continue;
+                    instruction.OpCode = OpCodes.Call;
+                    instruction.Operand = module.ImportReference(stand);
+                }
+            }
+        }
+    }
+
+    private static MethodDefinition FindStandIn(TypeDefinition creatorLog, MethodReference called) {
+        foreach (MethodDefinition candidate in creatorLog.Methods) {
+            if (candidate.Name != called.Name || !candidate.IsStatic || candidate.Parameters.Count != called.Parameters.Count) continue;
+            bool same = true;
+            for (int i = 0; i < candidate.Parameters.Count && same; i++)
+                same = candidate.Parameters[i].ParameterType.FullName == called.Parameters[i].ParameterType.FullName;
+            if (same) return candidate;
+        }
+        return null;
+    }
+
     // Writes 'sourceDll' to 'targetDll' with the plugin class added. Throws with the reason on failure.
     public static void Inject(string sourceDll, string targetDll) {
         string dir = Path.GetDirectoryName(sourceDll);
@@ -52,6 +88,8 @@ internal static class PluginInjector {
         AssemblyDefinition sdkStub = Read(Path.Combine(dir, "BigPuzzleSDK.dll"));
         AssemblyDefinition target = Read(sourceDll);
         ModuleDefinition module = target.MainModule;
+
+        RedirectLogging(module, sdkStub.MainModule.GetType("BigPuzzleSDK.CreatorLog"));
 
         if (module.GetType(TypeNamespace, TypeName) != null) { Save(target, targetDll); return; }
 

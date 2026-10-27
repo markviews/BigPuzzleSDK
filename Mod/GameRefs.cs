@@ -223,6 +223,13 @@ namespace BigPuzzleSDK {
             public const string PreferredPath = "CenturionSong"; // the vanilla bar to copy, if it is loaded
         }
 
+        // ---- Players (PuzzleSDK.players) ----
+        internal static class Players {
+            // A player's head slot (where the blindfold goes) is the one of their prop holders whose object name has one of these
+            // in it (lower case). If a Big Walk update renames it, PuzzlePlayer.hat stops finding the blindfold.
+            public static readonly string[] HatHomeNames = { "blindfold", "hat", "head" };
+        }
+
         // ---- Seat ----
         internal static class Seat {
             // The same chair model in two places: the credits theatre (every lobby size), and the 4-player cabin

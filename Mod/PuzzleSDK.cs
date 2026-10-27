@@ -19,6 +19,10 @@ public class PuzzleSDK : MonoBehaviour {
     [Il2CppInterop.Runtime.Attributes.HideFromIl2Cpp]
     public static void RegisterAssemblyOf(object anyObject) { if (anyObject != null) PuzzleLoader.RegisterAssembly(anyObject.GetType().Assembly); }
 
+    // Every player of the lobby, read-only: the host first, then by when they joined; the same order on every PC.
+    // A player who leaves stays in their place with isOnline false (and comes back to it if they rejoin).
+    public static IReadOnlyList<PuzzlePlayer> players { [Il2CppInterop.Runtime.Attributes.HideFromIl2Cpp] get { return PlayerRoster.View; } }
+
     internal bool won;     // true once Win() has been called
     internal bool running; // true between StartPuzzle() and StopPuzzle()
 

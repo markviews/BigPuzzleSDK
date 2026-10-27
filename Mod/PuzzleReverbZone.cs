@@ -39,6 +39,7 @@ public class PuzzleReverbZone : MonoBehaviour {
             return;
         }
         foreach (Collider c in colliders) c.isTrigger = true;   // never in anyone's way
+        gameObject.layer = LayerHelper.PlayerZoneLayer;              // and never in the way of a click
         Renderer r = GetComponent<Renderer>();
         if (r != null) r.enabled = false;
 

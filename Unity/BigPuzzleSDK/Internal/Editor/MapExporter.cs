@@ -177,6 +177,11 @@ public partial class PuzzleExporterWindow : EditorWindow
         bool autoNow = EditorGUILayout.ToggleLeft(new GUIContent("Export when the scene is saved", "Exports the ticked puzzles of a scene each time you save it, into the export folder below."), autoOn);
         if (autoNow != autoOn) AutoExportOnSave = autoNow;
 
+        // Export again every time Unity has recompiled your scripts
+        bool compileOn = AutoExportOnCompile;
+        bool compileNow = EditorGUILayout.ToggleLeft(new GUIContent("Export when code is compiled", "Exports the ticked puzzles of every open scene each time Unity finishes recompiling your scripts, into the export folder below."), compileOn);
+        if (compileNow != compileOn) AutoExportOnCompile = compileNow;
+
         // Where the last export went; the button above reuses it without asking
         string folder = ExportFolder();
         EditorGUILayout.Space();
@@ -260,8 +265,41 @@ public partial class PuzzleExporterWindow : EditorWindow
     private static string AutoExportPref { get { return "BigPuzzleSDK.AutoExportOnSave." + Hash128.Compute(Application.dataPath); } }
     internal static bool AutoExportOnSave
     {
-        get { return EditorPrefs.GetBool(AutoExportPref, false); }
+        get { return EditorPrefs.GetBool(AutoExportPref, true); }
         set { EditorPrefs.SetBool(AutoExportPref, value); }
+    }
+
+    // ---- Export after a compile ----
+    private static string AutoCompilePref { get { return "BigPuzzleSDK.AutoExportOnCompile." + Hash128.Compute(Application.dataPath); } }
+    internal static bool AutoExportOnCompile
+    {
+        get { return EditorPrefs.GetBool(AutoCompilePref, true); }
+        set { EditorPrefs.SetBool(AutoCompilePref, value); }
+    }
+
+    private const string CompiledKey = "BigPuzzleSDK.CompiledSinceExport";
+
+    // A compile started: remember it across the domain reload that follows (entering play mode reloads too, but isn't a compile)
+    internal static void OnCompileStarted()
+    {
+        if (AutoExportOnCompile) SessionState.SetBool(CompiledKey, true);
+    }
+
+    // The scripts were reloaded. If that was a compile, export once Unity has settled.
+    internal static void OnScriptsReloaded()
+    {
+        if (!SessionState.GetBool(CompiledKey, false)) return;
+        SessionState.SetBool(CompiledKey, false);
+        if (!AutoExportOnCompile) return;
+        EditorApplication.update += WaitThenExport;
+    }
+
+    private static void WaitThenExport()
+    {
+        if (EditorApplication.isCompiling || EditorApplication.isUpdating) return;   // still importing: wait
+        EditorApplication.update -= WaitThenExport;
+        if (EditorApplication.isPlayingOrWillChangePlaymode) return;
+        AutoExport(default(UnityEngine.SceneManagement.Scene), true);
     }
 
     private static bool autoExporting;   // an export is running: saves it causes don't start another
@@ -269,16 +307,17 @@ public partial class PuzzleExporterWindow : EditorWindow
     internal static void OnSceneSaved(UnityEngine.SceneManagement.Scene scene)
     {
         if (autoExporting || !AutoExportOnSave || EditorApplication.isPlayingOrWillChangePlaymode) return;
-        EditorApplication.delayCall += () => AutoExport(scene);
+        EditorApplication.delayCall += () => AutoExport(scene, false);
     }
 
-    private static void AutoExport(UnityEngine.SceneManagement.Scene scene)
+    // One scene (after a save), or every open scene (after a compile)
+    private static void AutoExport(UnityEngine.SceneManagement.Scene scene, bool allScenes)
     {
-        if (autoExporting || !scene.IsValid()) return;
+        if (autoExporting || (!allScenes && !scene.IsValid())) return;
         string folder = ExportFolder();
         if (string.IsNullOrEmpty(folder) || !Directory.Exists(folder))
         {
-            Debug.LogWarning("[PuzzleExporter] Export on save is on, but there's no export folder yet. Use the Export button once to choose one.");
+            Debug.LogWarning("[PuzzleExporter] Automatic export is on, but there's no export folder yet. Use the Export button once to choose one.");
             return;
         }
         PuzzleExporterWindow window = null;
@@ -292,7 +331,7 @@ public partial class PuzzleExporterWindow : EditorWindow
         try
         {
             window.RefreshDevPuzzles();
-            List<BigPuzzleSDK.PuzzleSDK> chosen = window.DevSelected().FindAll(p => p.gameObject.scene == scene);
+            List<BigPuzzleSDK.PuzzleSDK> chosen = allScenes ? window.DevSelected() : window.DevSelected().FindAll(p => p.gameObject.scene == scene);
             if (chosen.Count == 0) return;
             autoExporting = true;
             window.ExportSelected(chosen);
@@ -334,7 +373,10 @@ public partial class PuzzleExporterWindow : EditorWindow
                 if (BuildPack(path, Path.GetDirectoryName(path)))
                 {
                     done++;
-                    Debug.Log($"[PuzzleExporter] Exported to {path}");
+                    string written = fileName;
+                    for (int d = 0; d < writtenDlls.Count; d++)
+                        written += (d == writtenDlls.Count - 1 ? " and " : ", ") + writtenDlls[d];
+                    Debug.Log($"[PuzzleExporter] Exported {written} to {folder}");
                 }
             }
         }
@@ -359,8 +401,12 @@ public partial class PuzzleExporterWindow : EditorWindow
     // Builds the .puzzlepack of the selected puzzle at 'path' (an old file there is replaced).
     // True = it was written. If the puzzle uses the creator's own scripts, their plugin DLL (the scripts
     // DLL with the SDK's plugin class added) is written to 'pluginDir', beside the pack.
+    // The plugin DLLs the last BuildPack wrote beside the pack (for the one log line per puzzle)
+    private readonly List<string> writtenDlls = new List<string>();
+
     private bool BuildPack(string path, string pluginDir)
     {
+        writtenDlls.Clear();
         string stagingDir = Path.Combine(Application.temporaryCachePath, "PuzzleExportTemp");
         string buildDir = Path.Combine(stagingDir, "build"); // raw AssetBundle build output
         string packDir = Path.Combine(stagingDir, "pack");   // files that go into the .puzzlepack
@@ -444,7 +490,7 @@ public partial class PuzzleExporterWindow : EditorWindow
                 try
                 {
                     BigPuzzleSDK.GameAssets.PluginInjector.Inject(entry.Value, target);
-                    Debug.Log($"[PuzzleExporter] Wrote {entry.Key}.dll to {pluginDir}");
+                    writtenDlls.Add(entry.Key + ".dll");
                 }
                 catch (System.Exception copyError)
                 {
@@ -910,12 +956,19 @@ public static class PuzzleIds
     }
 }
 
-// Listens for scene saves for the "Export when the scene is saved" option (works with the window closed)
+// Listens for scene saves and compiles for the "Export when the scene is saved" / "Export when code is compiled" options (works with the window closed)
 [InitializeOnLoad]
 internal static class PuzzleAutoExportHook
 {
     static PuzzleAutoExportHook()
     {
         UnityEditor.SceneManagement.EditorSceneManager.sceneSaved += scene => PuzzleExporterWindow.OnSceneSaved(scene);
+        UnityEditor.Compilation.CompilationPipeline.compilationStarted += _ => PuzzleExporterWindow.OnCompileStarted();
+    }
+
+    [UnityEditor.Callbacks.DidReloadScripts]
+    private static void AfterReload()
+    {
+        PuzzleExporterWindow.OnScriptsReloaded();
     }
 }

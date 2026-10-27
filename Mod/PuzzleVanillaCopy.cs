@@ -485,7 +485,7 @@ public class PuzzleVanillaItem : PuzzleVanillaCopy, ISavedHeld {
     // Set in the Inspector (filled in by the loader); the names must match the Unity-side fields
     internal PuzzleVanillaItemType itemType;
     private string defaultText = "";      // Spare Sign: the text until a player writes something
-    private Color itemColor = Color.white;   // Kettle, Walkie Talkie, Backpack, Belt, Flare Gun: white keeps the game's own colour
+    private Color itemColor = Color.white;   // Kettle, Walkie Talkie, Backpack, Belt, Flare Gun, Folding Chair: white keeps the game's own colour
     private Color flareColor = Color.white;  // Flare Gun: the flare's colour (white = the game's own)
     private bool savesOnReload = true;    // held when the game saves or reloads = back at the spawn area
 
@@ -500,6 +500,9 @@ public class PuzzleVanillaItem : PuzzleVanillaCopy, ISavedHeld {
     public bool SavesOnReload => savesOnReload;
     public ulong ItemId { get { Find(); return itemId; } }
     public MonoBehaviour Owner => this;
+
+    // The game's prop behind this item (null until it exists), for PuzzlePlayer.held / hat
+    internal Prop GameProp { get { Find(); return prop; } }
 
     private bool Find() {
         if (prop != null) return true;
@@ -791,7 +794,7 @@ public class PuzzleVanillaItem : PuzzleVanillaCopy, ISavedHeld {
         if (itemType == PuzzleVanillaItemType.Torch) { ResetTorch(copy); return; }
         if (itemType == PuzzleVanillaItemType.PermoSign) { SetupPermoSign(copy); return; }
         if (itemType == PuzzleVanillaItemType.Kettle || itemType == PuzzleVanillaItemType.WalkieTalkie
-            || itemType == PuzzleVanillaItemType.Backpack || itemType == PuzzleVanillaItemType.Belt || itemType == PuzzleVanillaItemType.FlareGun) {
+            || itemType == PuzzleVanillaItemType.Backpack || itemType == PuzzleVanillaItemType.Belt || itemType == PuzzleVanillaItemType.FlareGun || itemType == PuzzleVanillaItemType.FoldingChair) {
             ApplyItemColor(copy);
             if (itemType == PuzzleVanillaItemType.FlareGun) { ApplyFlareColor(copy); ResetPropStates(copy); }
             return;
@@ -935,7 +938,7 @@ public class PuzzleVanillaItem : PuzzleVanillaCopy, ISavedHeld {
         int set = 0;
         try {
             if (itemType != PuzzleVanillaItemType.WalkieTalkie) {
-                string property = "_TintColor";
+                string property = itemType == PuzzleVanillaItemType.FoldingChair ? "_RColor" : "_TintColor";   // the chair's colour is its _RColor
                 foreach (Component c in copy.GetComponentsInChildren(Il2CppType.Of<PropertyBlockHelper>(), true)) {
                     PropertyBlockHelper helper = c != null ? c.TryCast<PropertyBlockHelper>() : null;
                     if (helper == null) continue;

@@ -36,6 +36,10 @@ public class PuzzleSDK : MonoBehaviour {
     // True on the host (and in single player). SDK functions only take effect on the host.
     public static bool IsHost => true;
 
+    // Every player of the lobby, read-only: the host first, then by when they joined; the same order on every PC.
+    // A player who leaves stays in their place with isOnline false (and comes back to it if they rejoin).
+    public static IReadOnlyList<PuzzlePlayer> players => System.Array.Empty<PuzzlePlayer>();
+
     // Called by the plugin class the exporter adds to your scripts DLL. Not for your own code.
     public static void RegisterAssemblyOf(object anyObject) { }
 

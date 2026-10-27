@@ -27,7 +27,7 @@ using static PropertyBlockHelper;
 namespace BigPuzzleSDK {
     [BepInPlugin("markviews.BigPuzzleSDK", "Big Puzzle SDK", Version)]
     public class Plugin : BasePlugin {
-        internal const string Version = "0.1.2";
+        internal const string Version = "0.1.3";
 
         internal static ManualLogSource log;
 
@@ -52,6 +52,7 @@ namespace BigPuzzleSDK {
             HeldJoinFix.InstallHook(harmony);
             LobbyData.Install(harmony);
             SdkJoinGate.Install(harmony);
+            ItemUse.Install(harmony);          // On Use / On Release of custom items
 
             // Register every MonoBehaviour in this assembly (BigPuzzleEditor + all puzzle scripts)
             // so the loader can AddComponent them by name.
@@ -194,6 +195,12 @@ namespace BigPuzzleSDK {
             SyncedVars.Tick();
             // Who has the SDK and the same puzzles
             SdkHandshake.Tick();
+            // PuzzleSDK.players, and moving players for puzzles
+            PlayerRoster.Tick();
+            PlayerCommands.Tick();
+            SyncedStore.Tick();
+            ItemUse.Tick();
+            ItemUseAnimation.Tick();
             // Other players: build the host's puzzles once its list has arrived
             if (HostPuzzleQueue.puzzles != null) BuildHostPuzzles();
             HostNotice.Tick();
@@ -1495,6 +1502,14 @@ namespace BigPuzzleSDK {
             return players.TryGetValue(connectionId, out Player player) && player.answer != null;
         }
 
+        // Host: did this player answer with the same SDK version as this PC? Only then does their PC know the SDK's
+        // player messages (see PlayerCommands); the game drops a player who is sent a message it has no handler for.
+        internal static bool HasSameVersion(int connectionId) {
+            if (!players.TryGetValue(connectionId, out Player player) || player.answer == null) return false;
+            string[] parts = player.answer.Split('|');
+            return parts.Length >= 2 && parts[1] == Plugin.Version;
+        }
+
         // Players: answer the host again (after this PC reloaded, so the reply rebuilds the puzzles)
         internal static void AnswerAgain() {
             answeredOn = IntPtr.Zero;
@@ -2479,6 +2494,8 @@ namespace BigPuzzleSDK {
         // Builds one puzzle from a pack already read at start-up (see PuzzleLibrary)
         // The puzzle being built right now (where synced variables made in code put their hidden states)
         internal static Transform BuildRoot;
+        // Its id, for the synced texts it makes
+        internal static string BuildPackId;
 
         public static GameObject LoadPuzzlePackage(PuzzlePack puzzlePack, int startTicket = -1) {
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
@@ -2503,6 +2520,8 @@ namespace BigPuzzleSDK {
 
                 var ctx = new BuildContext { root = root.transform, bundle = bundle };
                 BuildRoot = root.transform;
+                BuildPackId = puzzlePack.id;
+                SyncedStore.BeginPuzzle(BuildPackId);
                 int firstTicket = Tickets.BeginPuzzle(puzzlePack.name, startTicket);
 
                 // Only the creator's own objects need their shaders swapped, so do it before any
@@ -2585,6 +2604,7 @@ namespace BigPuzzleSDK {
                 return null;
             } finally {
                 BuildRoot = null;
+                BuildPackId = null;
                 if (holder != null) GameObject.Destroy(holder);
                 if (bundle != null) BundleAccess.Unload(bundle);   // the built puzzle keeps what it uses
                 if (loadedName != null) Plugin.log.LogInfo($"[Puzzle] Built '{loadedName}' from {puzzlePack.fileName} in {stopwatch.Elapsed.TotalMilliseconds:F0} ms");

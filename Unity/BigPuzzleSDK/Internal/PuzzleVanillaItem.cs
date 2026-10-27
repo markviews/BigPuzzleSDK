@@ -22,7 +22,7 @@ public class PuzzleVanillaItem : MonoBehaviour {
     [TextArea(2, 6)]
     [SerializeField] private string defaultText = "";
 
-    [Tooltip("Kettle, Walkie Talkie, Backpack, Belt and Flare Gun only: the item's colour. White (#FFFFFF) keeps the game's own colour.")]
+    [Tooltip("Kettle, Walkie Talkie, Backpack, Belt, Flare Gun and Folding Chair only: the item's colour. White (#FFFFFF) keeps the game's own colour.")]
     [SerializeField] private Color itemColor = Color.white;
 
     [Tooltip("Flare Gun only: the colour of the flare it shoots. White (#FFFFFF) keeps the game's own colour.")]

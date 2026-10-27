@@ -47,6 +47,7 @@ public class PuzzlePresenceSensor : PuzzleButtonBase {
                     Plugin.log.LogWarning($"[PuzzlePresenceSensor] '{name}' has a Mesh Collider that isn't Convex, so it can't tell who is inside. Tick Convex, or use a Box Collider.");
             }
             if (volumes.Count == 0) Plugin.log.LogWarning($"[PuzzlePresenceSensor] '{name}' has no collider, so it never detects anyone. Add a Box (or other) Collider sized to the area.");
+            gameObject.layer = LayerHelper.PlayerZoneLayer;   // so it doesn't catch clicks aimed at things inside it
             Renderer r = GetComponent<Renderer>();
             if (r != null) r.enabled = false;   // the placeholder shape is only for the editor
         } catch (Exception ex) {

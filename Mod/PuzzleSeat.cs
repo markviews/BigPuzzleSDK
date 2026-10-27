@@ -44,6 +44,14 @@ public class PuzzleSeat : MonoBehaviour {
     // Read-only for scripts
     public bool IsOccupied => occupied;
 
+    // Every seat that exists, and who is sitting in this one (for PuzzlePlayer.seat)
+    internal static readonly List<PuzzleSeat> all = new List<PuzzleSeat>();
+    private void Awake() { all.Add(this); }
+    private void OnDestroy() { all.Remove(this); }
+    internal PlayerCharacter Occupant {
+        get { try { return seat != null ? seat.occupant : null; } catch (Exception) { return null; } }
+    }
+
     // The game's seat animations and the camera / body offsets that go with each, in the enum's order
     // (from a scan of every PlayerPose in the game).
     private struct SeatLook {

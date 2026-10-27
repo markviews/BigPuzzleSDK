@@ -236,6 +236,10 @@
 <td>Grab, release and bump sounds copied from a game item: <code>Peg</code>, <code>Cowbell</code>, <code>Buoy</code>, <code>Football</code>, <code>Cannonball</code>, <code>Torch</code>, <code>FoldingChair</code>, <code>WalkieTalkie</code>, <code>Binoculars</code>, <code>Kettle</code>, <code>NightVisionGoggles</code>, <code>LaserPointer</code>, <code>Clock</code>, <code>Pomodoro</code>, <code>Sign</code>, <code>FlareGun</code>, <code>Blindfold</code>, <code>Megaphone</code>, <code>SalonBrush</code>, <code>Laptop</code>, <code>FoldingMap</code>, <code>CoordinatesTracker</code>, <code>GourdHolder</code>, <code>GourdCradle</code>, <code>Key</code>, <code>PermoSign</code>.</td>
 </tr>
 <tr>
+<td>Use Animation</td>
+<td>The animation the player plays while using the item, like the game's own items. None (default) is the game's normal response to using an item that does nothing. Binoculars, Laser Pointer, Night Vision Goggles, Megaphone, Walkie Talkie and Cannonball stay on while the use button is held; Flare Gun, Salon Brush, Buoy, Football, Torch, Cowbell and Radio play once when it is pressed. Everyone sees it.</td>
+</tr>
+<tr>
 <td>Can Belt / Can Backpack</td>
 <td>Players can put it on their belt / in their backpack.</td>
 </tr>
@@ -260,6 +264,14 @@
 <tr>
 <td>On Dropped</td>
 <td>Let go of.</td>
+</tr>
+<tr>
+<td>On Use</td>
+<td>A player holding it pressed the use button (host fires it).</td>
+</tr>
+<tr>
+<td>On Release</td>
+<td>The player let go of the use button, or put the item away while pressing it.</td>
 </tr>
 </tbody>
 </table></div>
@@ -1822,7 +1834,7 @@ if (s.Type == PuzzlePegType.Sound) Debug.Log("sound " + s.Sound);
 </tr>
 <tr>
 <td>Item Color</td>
-<td>Kettle, Walkie Talkie, Backpack, Belt, Flare Gun. White keeps the game's colour.</td>
+<td>Kettle, Walkie Talkie, Backpack, Belt, Flare Gun, Folding Chair. White keeps the game's colour.</td>
 </tr>
 <tr>
 <td>Flare Color</td>
