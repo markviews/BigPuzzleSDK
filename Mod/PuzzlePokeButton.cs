@@ -44,6 +44,9 @@ namespace BigPuzzleSDK {
         private TrackedPeckState logicState;   // the game's record of the button: 1 while pressed in (any player's press reaches the host)
         private int lastLogic = -1;
         private bool forceApply;   // SetClickable was called: apply even if the value did not change
+        private int ownValue = -1;       // the state this button just set itself (prime / unprime): its arrival is not a press
+        private float ownUntil;          // ...waited for until this time
+        private float unprimedSince = -1f;   // since when the button has sat unprimed with no re-arm planned (see Heal)
 
         // Called by the loader while the puzzle is still inactive
         internal void SetupButton(int index) {
@@ -168,6 +171,7 @@ namespace BigPuzzleSDK {
         // The first frame puts the button in its starting state; after that it follows SetClickable
         private void Update() {
             WatchPress();
+            Heal();
             if (reEnableAt > 0f && Time.time >= reEnableAt) {
                 reEnableAt = 0f;
                 clickable = true;
@@ -187,22 +191,45 @@ namespace BigPuzzleSDK {
             try {
                 TrackedPeckState target = sw.trackedStateSystem;
                 if (target == null) return;
-                int value = sw.stateMode == PeckSwitch.StateMode.Specific ? sw.specificState : 1;
-                if (PuzzleSDK.IsHost) target.SetState(value);   // other players: arrives from the host
+                int value = ValueOf(sw);
+                if (PuzzleSDK.IsHost) {
+                    target.SetState(value);   // other players: arrives from the host
+                    if (logicState != null && target.Pointer == logicState.Pointer) { ownValue = value; ownUntil = Time.time + 0.5f; }
+                }
             } catch (Exception ex) {
                 Plugin.log.LogWarning($"[PuzzlePokeButton] '{name}' could not use '{sw.name}': {ex.GetType().Name}: {ex.Message}");
             }
         }
 
-        // The host sees every player's press as the button's state going to 1 (pressed in), so the event
-        // fires for presses by anyone; the host then tells everyone (see PuzzleEvent)
+        // What the PeckSwitch sets (the prime switch sets the primed state: 0 on the game's button)
+        private static int ValueOf(PeckSwitch sw) { return sw.stateMode == PeckSwitch.StateMode.Specific ? sw.specificState : 1; }
+        private int PrimedValue { get { return primeSwitch != null ? ValueOf(primeSwitch) : 0; } }
+
+        // The host sees every player's press as the button leaving its primed state, so the event fires for presses by anyone; the host
+        // then tells everyone (see PuzzleEvent). It does not wait for the state to read exactly "pressed in": when several presses arrive
+        // together (spam clicking) the state can pass through that in a single frame and end on "off", and the press, and the re-arm
+        // planned for it, would be missed, leaving the button off for good.
         private void WatchPress() {
             if (logicState == null || !PuzzleSDK.IsHost) return;
             if (!PeckValue.TryRead(logicState, out int now)) return;
+            if (ownValue >= 0) {   // this button's own prime / unprime is on its way: not a press
+                if (now == ownValue || Time.time > ownUntil) { ownValue = -1; lastLogic = now; }
+                return;
+            }
             int before = lastLogic;
             lastLogic = now;
-            if (before < 0 || now == before || now != 1) return;   // the first reading is only a starting point
-            Pressed();
+            if (before < 0 || now == before) return;   // the first reading is only a starting point
+            if (before == PrimedValue && now != PrimedValue) Pressed();
+        }
+
+        // Safety net: a button that should re-arm itself (Auto Enable Seconds) but is sitting unprimed with no re-arm planned (a press that
+        // was missed) is primed again after the wait, so it can never stay off for good
+        private void Heal() {
+            if (!PuzzleSDK.IsHost || autoEnableSeconds <= 0f || !clickable || reEnableAt > 0f || !applied || logicState == null || ownValue >= 0) { unprimedSince = -1f; return; }
+            if (!PeckValue.TryRead(logicState, out int now)) return;
+            if (now == PrimedValue) { unprimedSince = -1f; return; }
+            if (unprimedSince < 0f) unprimedSince = Time.time;
+            else if (Time.time - unprimedSince > autoEnableSeconds + 1f) { unprimedSince = -1f; forceApply = true; }
         }
 
         // Called by the click patch when the local player pokes this button
@@ -212,8 +239,8 @@ namespace BigPuzzleSDK {
         }
 
         private void Pressed() {
-            if (!clickable) {
-                return;
+            if (!clickable || reEnableAt > 0f) {
+                return;   // off, or still pressed in: a press during the wait does nothing (so spam clicking can't fire it twice)
             }
             if (onPressed != null) onPressed.Invoke();
             if (pressedHook != null) pressedHook();

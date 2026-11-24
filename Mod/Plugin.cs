@@ -27,7 +27,7 @@ using static PropertyBlockHelper;
 namespace BigPuzzleSDK {
     [BepInPlugin("markviews.BigPuzzleSDK", "Big Puzzle SDK", Version)]
     public class Plugin : BasePlugin {
-        internal const string Version = "0.1.7";
+        internal const string Version = "0.1.8";
 
         internal static ManualLogSource log;
 
@@ -54,6 +54,9 @@ namespace BigPuzzleSDK {
             SdkJoinGate.Install(harmony);
             ItemUse.Install(harmony);          // On Use / On Release of custom items
             SecretZoneKeeper.Install(harmony);   // keeps the secret zone (switched off) so Vanilla Items can copy from it
+
+            PuzzleCuller.Enabled = Config.Bind("Culling", "Enabled", true, "Stop drawing the small parts of puzzles that are far from you. Logic, sound and networking are not affected.").Value;
+            PuzzleCuller.MinSize = Math.Max(0.0005f, Config.Bind("Culling", "MinSize", 0.005f, "A part is hidden when its radius divided by its distance is below this (0.005 = a part a few pixels wide). Higher hides more, from closer; lower hides less.").Value);
 
             // Register every MonoBehaviour in this assembly (BigPuzzleEditor + all puzzle scripts)
             // so the loader can AddComponent them by name.
@@ -184,6 +187,8 @@ namespace BigPuzzleSDK {
         private void ApplySavedGourds() { PuzzleSave.ApplyGourds(); }
 
         private void Update() {
+            // Puzzles far from the camera are not drawn
+            PuzzleCuller.Tick(activePuzzles);
             // Host: make sure players who joined late get the puzzle's grabbable items
             NetItems.Tick();
             // Joining players: show held items that had not arrived yet
